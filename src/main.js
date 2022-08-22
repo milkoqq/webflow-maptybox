@@ -6,11 +6,41 @@ const selectSort = document.querySelector('#app_form-sortby-select')
 
 const inputPosEnding = document.querySelector('#app_form-input-ending')
 const inputDuration = document.querySelector('#app_form-input-duration')
+const inputDistance = document.querySelector('#app_form-input-distance-label')
 
 const labelDistance = document.querySelector('.form_workout-distance-label')
 const labelDuration = document.querySelector('.form_workout-duration-label')
 const labelPace = document.querySelector('.form_workout-pace-label')
 const labelTemp = document.querySelector('.form_workout-temp-label')
+
+// Workout Clas
+
+
+class Workout {
+    _id = this._randomNumber(1, 1000)
+    _date = new Date()
+    _weatherToken = 'c0c4cb552464fc0334187736473c053a'
+    constructor(distance, duration, temperature, location) {
+        this.distance = distance
+        this.duration = duration
+        this._getPace()
+        this.temperature = temperature
+        this.location = location
+        //it will be FROM APP like this: 
+        //const running = new Running(44, 2, this._temperature, this._location/address)
+    }
+
+    _randomNumber(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    _getPace() {
+        return this.pace = Number((this.distance / this.duration).toFixed(1))
+    }
+
+
+
+}
 
 
 // App Class
@@ -112,13 +142,13 @@ class App {
                 color: "#FFFFFF",
                 draggable: true
             }).setLngLat([lng, lat])
-                // .setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML("<h4>Run in Komotini</h4>")) // add popup
+                .setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML("<h4>Run in Komotini</h4>")) // add popup
                 .addTo(this._map)
 
             inputPosEnding.value = `${lng}, ${lat.toFixed(4)}`
             this._markers.push(this._markerEnd)
             this._markerRoutes.push([lng, lat])
-            await this._updateRoute(this._markerStartCoords, this._markerEndCoords)
+            await this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
             this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML("<h4>Run in Komotini</h4>" + this._distance + 'km')) // add popup
             this._markerEnd.togglePopup()
 
@@ -133,7 +163,7 @@ class App {
             // Get Lng/Lat from Marker
             this._markerEndCoords = Object.values(this._markerEnd.getLngLat());
             inputPosEnding.value = `${this._markerEndCoords[0].toFixed(4)}, ${this._markerEndCoords[1].toFixed(4)}`;
-            await this._updateRoute(this._markerStartCoords, this._markerEndCoords)
+            await this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
             this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML("<h4>Run in Komotini</h4>" + this._distance + 'km'))
             this._markerEnd.togglePopup()
         }
@@ -155,24 +185,40 @@ class App {
             this._markerStart.remove()
             this._setMarkerStart(this._userLng, this._userLat)
             this._markerStartCoords = Object.values(this._markerStart.getLngLat())
-            this._updateRoute(this._markerStartCoords, this._markerEndCoords)
+            this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
         }
     }
 
     _updateMarkerStartCoords() {
         this._markerStartCoords = Object.values(this._markerStart.getLngLat())
         console.log(this._markerStartCoords)
-        this._updateRoute(this._markerStartCoords, this._markerEndCoords)
+        this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
 
     }
 
-    async _updateRoute(start, end) {
-        const query = await fetch(
+    _getJSON(url, errorMsg = 'Something went wrong') {
+        return fetch(url).then(response => {
+            if (!response.ok) throw new Error(`${errorMsg} (${response.status})`);
+
+            return response.json();
+        });
+    };
+
+    async _fetchRoute(start, end) {
+        // let [jsonDir, jsonTemp] = await Promise.allSettled([
+        //     this._getJSON(`https://api.mapbox.com/directions/v5/mapbox/${this._fetchType}/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${this._accessToken}`),
+        //     this._getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${start[1]}&longitude=${start[0]}&hourly=temperature_2m&current_weather=true`)
+        // ])
+        const queryDir = await fetch(
             `https://api.mapbox.com/directions/v5/mapbox/${this._fetchType}/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${this._accessToken}`
         );
-        const json = await query.json();
-        const data = json.routes[0];
+        const queryTemp = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${start[1]}&longitude=${start[0]}&hourly=temperature_2m&current_weather=true`)
+        const jsonTemp = await queryTemp.json()
+        const jsonDir = await queryDir.json();
+        const data = jsonDir.routes[0];
         this._distance = (data.distance / 1000).toFixed(2)
+        this._temperature = jsonTemp.current_weather.temperature
+        console.log(this._temperature)
         inputDistance.textContent = `Distance: ${this._distance}km`
         const route = data.geometry.coordinates;
         const geojson = {
@@ -210,6 +256,10 @@ class App {
     }
 }
 
+
+
 const app = new App()
 
+const running = new Workout(44, 22)
+console.log(running)
 
