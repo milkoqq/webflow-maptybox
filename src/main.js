@@ -2,9 +2,15 @@
 // DOM Elements
 const selectPos = document.querySelector('#app_form-position-select')
 const selectType = document.querySelector('.select-workout')
+const selectSort = document.querySelector('#app_form-sortby-select')
+
 const inputPosEnding = document.querySelector('#app_form-input-ending')
-const inputDistance = document.querySelector('#app_form-input-distance-label')
-const inputDuration = document.querySelector('.input-duration')
+const inputDuration = document.querySelector('#app_form-input-duration')
+
+const labelDistance = document.querySelector('.form_workout-distance-label')
+const labelDuration = document.querySelector('.form_workout-duration-label')
+const labelPace = document.querySelector('.form_workout-pace-label')
+const labelTemp = document.querySelector('.form_workout-temp-label')
 
 
 // App Class
