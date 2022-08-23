@@ -1,7 +1,7 @@
-
+"use strict";
 // DOM Elements
 const selectPos = document.querySelector('#app_form-position-select')
-const selectType = document.querySelector('.select-workout')
+const selectType = document.querySelector('#app_form-type-select')
 const selectSort = document.querySelector('#app_form-sortby-select')
 
 const inputPosEnding = document.querySelector('#app_form-input-ending')
@@ -12,11 +12,15 @@ const labelDistance = document.querySelector('.form_workout-distance-label')
 const labelDuration = document.querySelector('.form_workout-duration-label')
 const labelPace = document.querySelector('.form_workout-pace-label')
 const labelTemp = document.querySelector('.form_workout-temp-label')
+const labelDurationError = document.querySelector('.app_input-label-danger')
 
 const divOptions = document.querySelector('.app_options-component')
 const divInput = document.querySelector('.app_left-form-input')
 const divWorkout = document.querySelector('.app_left-form-workout')
 const divBegin = document.querySelector('.app_form-begin')
+
+const btnConfirm = document.querySelector('#button-save')
+const btnCancel = document.querySelector('#button-cancel')
 
 // Workout Clas
 
@@ -25,12 +29,14 @@ class Workout {
     _id = this._randomNumber(1, 1000)
     _date = new Date()
     _weatherToken = 'c0c4cb552464fc0334187736473c053a'
-    constructor(distance, duration, temperature, location) {
+    constructor(type, distance, duration, temperature, locationRoad, locationCity) {
+        this.type = type
         this.distance = distance
         this.duration = duration
         this._getPace()
         this.temperature = temperature
-        this.location = location
+        this.locationRoad = locationRoad
+        this.locationCity = locationCity
         //it will be FROM APP like this: 
         //const running = new Running(44, 2, this._temperature, this._location/address)
     }
@@ -61,11 +67,18 @@ class App {
     _markerEnd;
     _markerEndCoords;
     _markerRoutes = []
+    _months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     _userLng;
     _userLat;
+    _temperature;
+    _locationCity;
+    _locationStreet;
+    _workouts = [];
+    _type;
 
     constructor() {
         this._init()
+        btnConfirm.addEventListener('click', this._newWorkout.bind(this))
 
     }
 
@@ -160,11 +173,10 @@ class App {
             divBegin.classList.add('is--hidden')
             divInput.classList.remove('is--hidden')
             inputDuration.focus()
-            this._renderWorkout()
+            // this._renderWorkout()
 
 
         }
-
 
         // document.querySelector('.form').classList.remove('hidden')
 
@@ -215,16 +227,24 @@ class App {
     };
 
     async _fetchRoute(start, end) {
+
         // let [jsonDir, jsonTemp] = await Promise.allSettled([
         //     this._getJSON(`https://api.mapbox.com/directions/v5/mapbox/${this._fetchType}/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${this._accessToken}`),
         //     this._getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${start[1]}&longitude=${start[0]}&hourly=temperature_2m&current_weather=true`)
         // ])
+        // why the fuck it doesn't work atm idk.
+
         const queryDir = await fetch(
             `https://api.mapbox.com/directions/v5/mapbox/${this._fetchType}/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${this._accessToken}`
         );
         const queryTemp = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${start[1]}&longitude=${start[0]}&hourly=temperature_2m&current_weather=true`)
+        const queryLoc = await fetch(`https://api.geoapify.com/v1/geocode/reverse?lat=${end[1]}&lon=${end[0]}&apiKey=ae4d111379a849988e6112880aba2273`)
         const jsonTemp = await queryTemp.json()
         const jsonDir = await queryDir.json();
+        const locTemp = await queryLoc.json()
+        this._locationStreet = locTemp.features[0].properties.street
+        this._locationCity = locTemp.features[0].properties.city
+        console.log(locTemp)
         const data = jsonDir.routes[0];
         this._distance = (data.distance / 1000).toFixed(2)
         this._temperature = jsonTemp.current_weather.temperature
@@ -265,43 +285,71 @@ class App {
         }
     }
 
-    _renderWorkout() {
+    _newWorkout(e) {
+        e.preventDefault()
+        console.log(selectType)
+
+        if (!(inputDuration.value && inputDuration.value > 0)) {
+            labelDurationError.style.opacity = 1
+            labelDurationError.textContent = `Required`
+        }
+
+        // Get data from form.
+        // already global: _distance, _temperature
+        const type = selectType.value
+        const duration = +inputDuration.value
+        let workout;
+
+
+        if (type === 'running') {
+            workout = new Workout(type, +this._distance, duration, this._temperature, this._locationStreet, this._locationCity)
+            console.log(workout)
+        }
+        this._workouts.push(workout)
+        this._renderWorkout(workout)
+        if (this._workouts.length > 0) {
+            divOptions.classList.remove('is--hidden')
+        }
+
+    }
+
+    _renderWorkout(workout) {
         let html = `
         <div class="app_left-form-workout">
-        <div class="app_left-form-workout-side is--running"></div>
+        <div class="app_left-form-workout-side is--${workout.type}"></div>
         <div class="app_left-form-workout-main">
           <div class="form_workout-main-top">
-            <div class="text-size-small">10 Aug 2022</div>
+            <div class="text-size-small">${String(workout._date.getDate())} ${this._months[workout._date.getMonth()]} ${workout._date.getFullYear()}</div>
           </div>
           <div class="form_workout-main-mid">
-            <div class="text-block-5">Running in <span class="text-span">Komotini, Greece</span></div>
+            <div class="text-block-5">Running in <span class="text-span">${workout.locationRoad}, ${workout.locationCity}.</span></div>
           </div>
           <div class="form_workout-main-bottom">
             <div class="div-block-7">
               <div class="form_workout-stats-wrapper"><img src="https://www.svgrepo.com/show/406153/man-biking-medium-dark-skin-tone.svg" loading="lazy" id="app_cycling-icon" alt="" class="workout-stats-icon is--hidden">
               <img src="https://www.svgrepo.com/show/400693/running.svg" loading="lazy" id="app_running-icon" alt="" class="workout-stats-icon">
-                <div class="form_workout-distance-label">4,2</div>
+                <div class="form_workout-distance-label">${workout.distance}</div>
                 <div class="margin-left margin-xxsmall">
                   <div class="text-size-tiny">KM</div>
                 </div>
               </div>
               <div class="form_workout-stats-wrapper">
             <img src="https://www.svgrepo.com/show/112325/timer.svg" loading="lazy" alt="" class="workout-stats-icon-copy">
-                <div class="form_workout-duration-label">8</div>
+                <div class="form_workout-duration-label">${workout.duration}</div>
                 <div class="margin-left margin-xxsmall">
                   <div class="text-size-tiny">MIN</div>
                 </div>
               </div>
               <div class="form_workout-stats-wrapper"><img src="https://www.svgrepo.com/show/233266/bolt-thunder.svg" loading="lazy" alt="" class="workout-stats-icon-copy">
-                <div class="form_workout-pace-label">1.1</div>
+                <div class="form_workout-pace-label">${workout.pace}</div>
                 <div class="margin-left margin-xxsmall">
                   <div class="text-size-tiny">KM/MIN</div>
                 </div>
               </div>
               <div class="form_workout-stats-wrapper"><img src="https://www.svgrepo.com/show/15601/sun.svg" loading="lazy" alt="" class="workout-stats-icon-copy">
-                <div class="form_workout-temp-label">32</div>
+                <div class="form_workout-temp-label">${workout.temperature}</div>
                 <div class="margin-left margin-xxsmall">
-                  <div class="text-size-tiny">°</div>
+                  <div class="text-size-tiny">°C</div>
                 </div>
               </div>
             </div>
