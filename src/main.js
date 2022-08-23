@@ -13,6 +13,11 @@ const labelDuration = document.querySelector('.form_workout-duration-label')
 const labelPace = document.querySelector('.form_workout-pace-label')
 const labelTemp = document.querySelector('.form_workout-temp-label')
 
+const divOptions = document.querySelector('.app_options-component')
+const divInput = document.querySelector('.app_left-form-input')
+const divWorkout = document.querySelector('.app_left-form-workout')
+const divBegin = document.querySelector('.app_form-begin')
+
 // Workout Clas
 
 
@@ -66,7 +71,8 @@ class App {
 
     async _init() {
         try {
-            console.log('e')
+
+            console.log('Initialization ')
             const pos = await this._getPosition()
             const { longitude: lng, latitude: lat } = pos.coords
             this._userLng = lng;
@@ -151,6 +157,10 @@ class App {
             await this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
             this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML("<h4>Run in Komotini</h4>" + this._distance + 'km')) // add popup
             this._markerEnd.togglePopup()
+            divBegin.classList.add('is--hidden')
+            divInput.classList.remove('is--hidden')
+            inputDuration.focus()
+            this._renderWorkout()
 
 
         }
@@ -253,6 +263,56 @@ class App {
                 }
             });
         }
+    }
+
+    _renderWorkout() {
+        let html = `
+        <div class="app_left-form-workout">
+        <div class="app_left-form-workout-side is--running"></div>
+        <div class="app_left-form-workout-main">
+          <div class="form_workout-main-top">
+            <div class="text-size-small">10 Aug 2022</div>
+          </div>
+          <div class="form_workout-main-mid">
+            <div class="text-block-5">Running in <span class="text-span">Komotini, Greece</span></div>
+          </div>
+          <div class="form_workout-main-bottom">
+            <div class="div-block-7">
+              <div class="form_workout-stats-wrapper"><img src="https://www.svgrepo.com/show/406153/man-biking-medium-dark-skin-tone.svg" loading="lazy" id="app_cycling-icon" alt="" class="workout-stats-icon is--hidden">
+              <img src="https://www.svgrepo.com/show/400693/running.svg" loading="lazy" id="app_running-icon" alt="" class="workout-stats-icon">
+                <div class="form_workout-distance-label">4,2</div>
+                <div class="margin-left margin-xxsmall">
+                  <div class="text-size-tiny">KM</div>
+                </div>
+              </div>
+              <div class="form_workout-stats-wrapper">
+            <img src="https://www.svgrepo.com/show/112325/timer.svg" loading="lazy" alt="" class="workout-stats-icon-copy">
+                <div class="form_workout-duration-label">8</div>
+                <div class="margin-left margin-xxsmall">
+                  <div class="text-size-tiny">MIN</div>
+                </div>
+              </div>
+              <div class="form_workout-stats-wrapper"><img src="https://www.svgrepo.com/show/233266/bolt-thunder.svg" loading="lazy" alt="" class="workout-stats-icon-copy">
+                <div class="form_workout-pace-label">1.1</div>
+                <div class="margin-left margin-xxsmall">
+                  <div class="text-size-tiny">KM/MIN</div>
+                </div>
+              </div>
+              <div class="form_workout-stats-wrapper"><img src="https://www.svgrepo.com/show/15601/sun.svg" loading="lazy" alt="" class="workout-stats-icon-copy">
+                <div class="form_workout-temp-label">32</div>
+                <div class="margin-left margin-xxsmall">
+                  <div class="text-size-tiny">°</div>
+                </div>
+              </div>
+            </div>
+            <div class="form_workout-edit-wrapper">
+              <div class="form_workout-edit-action"><img src="https://www.svgrepo.com/show/32615/edit.svg" loading="lazy" alt="" class="form_workout-edit-img"></div>
+              <div class="form_workout-edit-action"><img src="https://www.svgrepo.com/show/244044/delete.svg" loading="lazy" alt="" class="form_workout-edit-img"></div>
+            </div>
+          </div>
+        </div>
+        `
+        document.querySelector('.app_form-wrapper').insertAdjacentHTML('beforeend', html)
     }
 }
 
