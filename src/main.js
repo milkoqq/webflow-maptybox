@@ -23,8 +23,7 @@ const btnConfirm = document.querySelector('#button-save')
 const btnCancel = document.querySelector('#button-cancel')
 
 // Workout Clas
-
-
+// Maybe I should have split into subclasses Running/Cycling. But no real differences besides the 'type' to call super().
 class Workout {
     _id = this._randomNumber(1, 1000)
     _date = new Date()
@@ -37,8 +36,6 @@ class Workout {
         this.temperature = temperature
         this.locationRoad = locationRoad
         this.locationCity = locationCity
-        //it will be FROM APP like this: 
-        //const running = new Running(44, 2, this._temperature, this._location/address)
     }
 
     _randomNumber(min, max) {
@@ -52,7 +49,6 @@ class Workout {
 
 
 }
-
 
 // App Class
 class App {
@@ -173,12 +169,9 @@ class App {
             divBegin.classList.add('is--hidden')
             divInput.classList.remove('is--hidden')
             inputDuration.focus()
-            // this._renderWorkout()
 
 
         }
-
-        // document.querySelector('.form').classList.remove('hidden')
 
         async function onDragEnd() {
             // Function fires when dragging of 2nd marker stops.
