@@ -38,6 +38,8 @@ class Workout {
         this.locationCity = locationCity
     }
 
+
+
     _randomNumber(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
@@ -77,6 +79,8 @@ class App {
         btnConfirm.addEventListener('click', this._newWorkout.bind(this))
 
     }
+
+
 
     async _init() {
         try {
@@ -362,5 +366,6 @@ class App {
 const app = new App()
 
 const running = new Workout(44, 22)
+
 console.log(running)
 
