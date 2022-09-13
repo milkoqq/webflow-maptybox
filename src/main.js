@@ -22,20 +22,23 @@ const divBegin = document.querySelector('.app_form-begin')
 const btnConfirm = document.querySelector('#button-save')
 const btnCancel = document.querySelector('#button-cancel')
 
+const btnNew = document.querySelector('.app_options-locate-wrapper')
+
 // Workout Clas
 // Maybe I should have split into subclasses Running/Cycling. But no real differences besides the 'type' to call super().
 class Workout {
     _id = this._randomNumber(1, 1000)
     _date = new Date()
     _weatherToken = 'c0c4cb552464fc0334187736473c053a'
-    constructor(type, distance, duration, temperature, locationRoad, locationCity) {
+    constructor(type, distance, duration, temperature, locationRoad, locationCity, route) {
         this.type = type
         this.distance = distance
         this.duration = duration
-        this._getPace()
         this.temperature = temperature
         this.locationRoad = locationRoad
         this.locationCity = locationCity
+        this.route = route
+        this._getPace()
     }
 
 
@@ -58,7 +61,7 @@ class App {
     _distance;
     _fetchType = 'walking'
     _map;
-    _mapZoomLevel = 15
+    _mapZoomLevel = 13
     _markers = []
     _markerStart;
     _markerStartCoords;
@@ -73,10 +76,12 @@ class App {
     _locationStreet;
     _workouts = [];
     _type;
+    _route;
 
     constructor() {
         this._init()
         btnConfirm.addEventListener('click', this._newWorkout.bind(this))
+        btnNew.addEventListener('click', this._addNewWorkout.bind(this))
 
     }
 
@@ -86,7 +91,7 @@ class App {
         try {
 
             console.log('Initialization ')
-            const pos = await this._getPosition()
+            const pos = await this._getPosition().catch(err => console.log(err))
             const { longitude: lng, latitude: lat } = pos.coords
             this._userLng = lng;
             this._userLat = lat;
@@ -148,27 +153,30 @@ class App {
     }
 
     async _setMarkerEnd(e) {
-        // Get Lng/Lat positions from click on map
-        let { lng, lat } = e.lngLat
 
-        // Assigning to markerEndCoords global property.
-        this._markerEndCoords = [lng, lat]
 
         // Set Marker End if it doesn't exist.
         if (!this._markerEnd) {
+            // Get Lng/Lat positions from click on map
+            let { lng, lat } = e.lngLat
+
+            // Assigning to markerEndCoords global property.
+            this._markerEndCoords = [lng, lat]
 
             this._markerEnd = new mapboxgl.Marker({
                 color: "#FFFFFF",
                 draggable: true
             }).setLngLat([lng, lat])
-                .setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML("<h4>Run in Komotini</h4>")) // add popup
                 .addTo(this._map)
 
             inputPosEnding.value = `${lng}, ${lat.toFixed(4)}`
             this._markers.push(this._markerEnd)
             this._markerRoutes.push([lng, lat])
+            console.log(this._markerRoutes)
             await this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
-            this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML("<h4>Run in Komotini</h4>" + this._distance + 'km')) // add popup
+            console.log(this._map.getLayer('route')) ////// UNDEFINED?
+            console.log(this._route) /////// EXISTS
+            this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h4 style="color: black">Run in Komotini ${this._distance}km</h4>`)) // add popup
             this._markerEnd.togglePopup()
             divBegin.classList.add('is--hidden')
             divInput.classList.remove('is--hidden')
@@ -179,11 +187,11 @@ class App {
 
         async function onDragEnd() {
             // Function fires when dragging of 2nd marker stops.
-            // Get Lng/Lat from Marker
+            // Get new Lng/Lat from Marker
             this._markerEndCoords = Object.values(this._markerEnd.getLngLat());
             inputPosEnding.value = `${this._markerEndCoords[0].toFixed(4)}, ${this._markerEndCoords[1].toFixed(4)}`;
             await this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
-            this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML("<h4>Run in Komotini</h4>" + this._distance + 'km'))
+            this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h4 style="color: black">Run in Komotini ${this._distance}km</h4>`)) // add popup
             this._markerEnd.togglePopup()
         }
         this._markerEnd.on('dragend', onDragEnd.bind(this))
@@ -194,7 +202,7 @@ class App {
     _setMarkerStartToDrag() {
         if (selectPos.value === 'dragToPos') {
             this._markerStart.setDraggable(true)
-            console.log(this._markerStart.isDraggable())
+            // console.log(this._markerStart.isDraggable())
             this._markerStart.on('dragend', this._updateMarkerStartCoords.bind(this))
 
 
@@ -239,21 +247,23 @@ class App {
         const jsonTemp = await queryTemp.json()
         const jsonDir = await queryDir.json();
         const locTemp = await queryLoc.json()
-        this._locationStreet = locTemp.features[0].properties.street
-        this._locationCity = locTemp.features[0].properties.city
-        console.log(locTemp)
+        this._locationStreet = locTemp.features[0].properties.street ?? locTemp.features[0].properties.address_line1 ?? locTemp.features[0].properties.address_line2
+        this._locationCity = locTemp.features[0].properties.city ?? locTemp.features[0].properties.country
+        // console.log(jsonDir)
+        // console.log(queryTemp, jsonTemp)
+        // console.log(queryLoc, locTemp)
         const data = jsonDir.routes[0];
         this._distance = (data.distance / 1000).toFixed(2)
         this._temperature = jsonTemp.current_weather.temperature
-        console.log(this._temperature)
+        // console.log(this._temperature)con
         inputDistance.textContent = `Distance: ${this._distance}km`
-        const route = data.geometry.coordinates;
+        this._route = data.geometry.coordinates;
         const geojson = {
             type: 'Feature',
             properties: {},
             geometry: {
                 type: 'LineString',
-                coordinates: route
+                coordinates: this._route
             }
         };
         // if the route already exists on the map, we'll reset it using setData
@@ -280,11 +290,12 @@ class App {
                 }
             });
         }
+
     }
 
     _newWorkout(e) {
         e.preventDefault()
-        console.log(selectType)
+        // console.log(selectType)
 
         if (!(inputDuration.value && inputDuration.value > 0)) {
             labelDurationError.style.opacity = 1
@@ -299,8 +310,7 @@ class App {
 
 
         if (type === 'running') {
-            workout = new Workout(type, +this._distance, duration, this._temperature, this._locationStreet, this._locationCity)
-            console.log(workout)
+            workout = new Workout(type, +this._distance, duration, this._temperature, this._locationStreet, this._locationCity, this._route)
         }
         this._workouts.push(workout)
         this._renderWorkout(workout)
@@ -358,6 +368,29 @@ class App {
         </div>
         `
         document.querySelector('.app_form-wrapper').insertAdjacentHTML('beforeend', html)
+        console.log(this._workouts)
+
+        divInput.classList.add('is--hidden')
+
+
+    }
+
+    _addNewWorkout() {
+        // Removal process
+        inputDuration.value = ''
+        this._markerStart.remove()
+        this._markerEnd.remove()
+        this._markerEnd = null
+        this._map.removeLayer('route')
+        this._map.removeSource('route')
+        this._route = []
+        divInput.classList.remove('is--hidden')
+
+        inputDuration.focus()
+        this._setMarkerStart(this._userLng, this._userLat)
+        console.log('========debugg=========')
+        console.log(this._workouts)
+
     }
 }
 
