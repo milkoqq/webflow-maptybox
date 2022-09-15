@@ -18,9 +18,11 @@ const divOptions = document.querySelector('.app_options-component')
 const divInput = document.querySelector('.app_left-form-input')
 const divWorkout = document.querySelector('.app_left-form-workout')
 const divBegin = document.querySelector('.app_form-begin')
+const divWrapper = document.querySelector('.app_form-wrapper')
 
 const btnConfirm = document.querySelector('#button-save')
 const btnCancel = document.querySelector('#button-cancel')
+const btnDel = document.querySelector('.form_workout-edit-img')
 
 const btnNew = document.querySelector('.app_options-locate-wrapper')
 
@@ -82,7 +84,7 @@ class App {
         this._init()
         btnConfirm.addEventListener('click', this._newWorkout.bind(this))
         btnNew.addEventListener('click', this._addNewWorkout.bind(this))
-
+        divWrapper.addEventListener('click', this._selectWorkout.bind(this))
     }
 
 
@@ -95,7 +97,7 @@ class App {
             const { longitude: lng, latitude: lat } = pos.coords
             this._userLng = lng;
             this._userLat = lat;
-            console.log(lng, lat)
+            // console.log(lng, lat)
             await this._loadMap(lng, lat)
             this._setMarkerStart(lng, lat)
             this._map.on('click', this._setMarkerEnd.bind(this))
@@ -149,7 +151,7 @@ class App {
         this._markers.push(this._markerStart)
         this._markerRoutes.push(this._markerStartCoords)
         // Print the marker's longitude and latitude values in the console
-        console.log(this._markerStartCoords)
+        // console.log(this._markerStartCoords)
     }
 
     async _setMarkerEnd(e) {
@@ -175,7 +177,7 @@ class App {
             console.log(this._markerRoutes)
             await this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
             console.log(this._map.getLayer('route')) ////// UNDEFINED?
-            console.log(this._route) /////// EXISTS
+            // console.log(this._route) /////// EXISTS
             this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h4 style="color: black">Run in Komotini ${this._distance}km</h4>`)) // add popup
             this._markerEnd.togglePopup()
             divBegin.classList.add('is--hidden')
@@ -300,6 +302,7 @@ class App {
         if (!(inputDuration.value && inputDuration.value > 0)) {
             labelDurationError.style.opacity = 1
             labelDurationError.textContent = `Required`
+            return
         }
 
         // Get data from form.
@@ -313,6 +316,7 @@ class App {
             workout = new Workout(type, +this._distance, duration, this._temperature, this._locationStreet, this._locationCity, this._route)
         }
         this._workouts.push(workout)
+        // this._workouts.forEach(workout => this._renderWorkout(workout))
         this._renderWorkout(workout)
         if (this._workouts.length > 0) {
             divOptions.classList.remove('is--hidden')
@@ -324,8 +328,8 @@ class App {
         let html = `
         <div class="app_left-form-workout">
         <div class="app_left-form-workout-side is--${workout.type}"></div>
-        <div class="app_left-form-workout-main">
-          <div class="form_workout-main-top">
+        <div class="app_left-form-workout-main" data-id="${workout._id}">
+          <div class="form_workout-main-top" >
             <div class="text-size-small">${String(workout._date.getDate())} ${this._months[workout._date.getMonth()]} ${workout._date.getFullYear()}</div>
           </div>
           <div class="form_workout-main-mid">
@@ -376,7 +380,7 @@ class App {
     }
 
     _addNewWorkout() {
-        // Removal process
+        // Current Workout Removal process
         inputDuration.value = ''
         this._markerStart.remove()
         this._markerEnd.remove()
@@ -385,6 +389,7 @@ class App {
         this._map.removeSource('route')
         this._route = []
         divInput.classList.remove('is--hidden')
+        labelDurationError.style.opacity = 0
 
         inputDuration.focus()
         this._setMarkerStart(this._userLng, this._userLat)
@@ -392,13 +397,20 @@ class App {
         console.log(this._workouts)
 
     }
+
+    _selectWorkout(e) {
+        console.dir(e.target)
+        if (e.target.classList.contains('form_workout-edit-img')) {
+            const elToDel = e.target.closest('.app_left-form-workout-main')
+            this._workouts = this._workouts.filter(workout => workout._id !== Number(elToDel.dataset.id))
+        }
+    }
 }
+
 
 
 
 const app = new App()
 
 const running = new Workout(44, 22)
-
-console.log(running)
 
