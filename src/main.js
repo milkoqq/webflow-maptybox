@@ -19,6 +19,7 @@ const divInput = document.querySelector('.app_left-form-input')
 const divWorkout = document.querySelector('.app_left-form-workout')
 const divBegin = document.querySelector('.app_form-begin')
 const divWrapper = document.querySelector('.app_form-wrapper')
+const divWorkoutList = document.querySelector('.app_left-workout-container')
 
 const btnConfirm = document.querySelector('#button-save')
 const btnCancel = document.querySelector('#button-cancel')
@@ -79,12 +80,13 @@ class App {
     _workouts = [];
     _type;
     _route;
+    _html;
 
     constructor() {
         this._init()
         btnConfirm.addEventListener('click', this._newWorkout.bind(this))
         btnNew.addEventListener('click', this._addNewWorkout.bind(this))
-        divWrapper.addEventListener('click', this._selectWorkout.bind(this))
+        divWrapper.addEventListener('click', this._deleteWorkout.bind(this))
     }
 
 
@@ -325,7 +327,7 @@ class App {
     }
 
     _renderWorkout(workout) {
-        let html = `
+        this._html = `
         <div class="app_left-form-workout">
         <div class="app_left-form-workout-side is--${workout.type}"></div>
         <div class="app_left-form-workout-main" data-id="${workout._id}">
@@ -371,7 +373,7 @@ class App {
           </div>
         </div>
         `
-        document.querySelector('.app_form-wrapper').insertAdjacentHTML('beforeend', html)
+        divWorkoutList.insertAdjacentHTML('beforeend', this._html)
         console.log(this._workouts)
 
         divInput.classList.add('is--hidden')
@@ -398,11 +400,12 @@ class App {
 
     }
 
-    _selectWorkout(e) {
-        console.dir(e.target)
+    _deleteWorkout(e) {
         if (e.target.classList.contains('form_workout-edit-img')) {
             const elToDel = e.target.closest('.app_left-form-workout-main')
             this._workouts = this._workouts.filter(workout => workout._id !== Number(elToDel.dataset.id))
+            divWorkoutList.innerHTML = ''
+            this._workouts.forEach(workout => this._renderWorkout(workout))
         }
     }
 }
@@ -412,5 +415,5 @@ class App {
 
 const app = new App()
 
-const running = new Workout(44, 22)
+//Keep pushing
 
