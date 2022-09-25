@@ -23,7 +23,8 @@ const divWorkoutList = document.querySelector('.app_left-workout-container')
 
 const btnConfirm = document.querySelector('#button-save')
 const btnCancel = document.querySelector('#button-cancel')
-const btnDel = document.querySelector('.form_workout-edit-img')
+const btnDel = document.querySelector('#button-delete')
+const btnEdit = document.querySelector('#button-edit')
 
 const btnNew = document.querySelector('.app_options-locate-wrapper')
 
@@ -164,7 +165,7 @@ class App {
             // Get Lng/Lat positions from click on map
             let { lng, lat } = e.lngLat
 
-            // Assigning to markerEndCoords global property.
+            // Assigning to global property markerEndCoords.
             this._markerEndCoords = [lng, lat]
 
             this._markerEnd = new mapboxgl.Marker({
@@ -307,6 +308,11 @@ class App {
             return
         }
 
+        if (!this._markerEnd) {
+            console.log("Set an ending-route marker on map!")
+            return
+        }
+
         // Get data from form.
         // already global: _distance, _temperature
         const type = selectType.value
@@ -317,12 +323,17 @@ class App {
         if (type === 'running') {
             workout = new Workout(type, +this._distance, duration, this._temperature, this._locationStreet, this._locationCity, this._route)
         }
+
+        if (type === 'cycling') {
+            workout = new Workout(type, +this._distance, duration, this._temperature, this._locationStreet, this._locationCity, this._route)
+        }
         this._workouts.push(workout)
         // this._workouts.forEach(workout => this._renderWorkout(workout))
         this._renderWorkout(workout)
         if (this._workouts.length > 0) {
             divOptions.classList.remove('is--hidden')
         }
+        this._markerEnd.setDraggable(false)
 
     }
 
@@ -367,8 +378,8 @@ class App {
               </div>
             </div>
             <div class="form_workout-edit-wrapper">
-              <div class="form_workout-edit-action"><img src="https://www.svgrepo.com/show/32615/edit.svg" loading="lazy" alt="" class="form_workout-edit-img"></div>
-              <div class="form_workout-edit-action"><img src="https://www.svgrepo.com/show/244044/delete.svg" loading="lazy" alt="" class="form_workout-edit-img"></div>
+              <div class="form_workout-edit-action"><img src="https://uploads-ssl.webflow.com/62fbb644e10f136346d86d9e/630351b40fed0ac1b5f7acf8_Vector.svg" loading="lazy" alt="" id="button-edit" class="form_workout-edit-img"></div>
+              <div class="form_workout-edit-action"><img src="https://uploads-ssl.webflow.com/62fbb644e10f136346d86d9e/630351b3ee19b62ebdbb93dc_Vector-1.svg" loading="lazy" alt="" id="button-delete" class="form_workout-edit-img"></div>
             </div>
           </div>
         </div>
@@ -383,6 +394,11 @@ class App {
 
     _addNewWorkout() {
         // Current Workout Removal process
+        if (!this._map.getLayer('route') || !this._markerEnd || !inputDuration.value) {
+            console.log('============naxoui')
+            console.log(this._workouts)
+            return
+        }
         inputDuration.value = ''
         this._markerStart.remove()
         this._markerEnd.remove()
@@ -392,7 +408,7 @@ class App {
         this._route = []
         divInput.classList.remove('is--hidden')
         labelDurationError.style.opacity = 0
-
+        console.log("♥♥♥♥♥♥♥♥♥♥♥♥♥")
         inputDuration.focus()
         this._setMarkerStart(this._userLng, this._userLat)
         console.log('========debugg=========')
@@ -401,12 +417,11 @@ class App {
     }
 
     _deleteWorkout(e) {
-        if (e.target.classList.contains('form_workout-edit-img')) {
-            const elToDel = e.target.closest('.app_left-form-workout-main')
-            this._workouts = this._workouts.filter(workout => workout._id !== Number(elToDel.dataset.id))
-            divWorkoutList.innerHTML = ''
-            this._workouts.forEach(workout => this._renderWorkout(workout))
-        }
+        if (!(e.target.id === 'button-delete')) return
+        const elToDel = e.target.closest('.app_left-form-workout-main')
+        this._workouts = this._workouts.filter(workout => workout._id !== Number(elToDel.dataset.id))
+        divWorkoutList.innerHTML = ''
+        this._workouts.forEach(workout => this._renderWorkout(workout))
     }
 }
 
