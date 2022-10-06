@@ -88,6 +88,7 @@ class App {
         btnConfirm.addEventListener('click', this._newWorkout.bind(this))
         btnNew.addEventListener('click', this._addNewWorkout.bind(this))
         divWrapper.addEventListener('click', this._deleteWorkout.bind(this))
+        // selectSort.addEventListener('change', this._sortWorkouts.bind(this, this._workouts, selectSort.value))
     }
 
 
@@ -174,12 +175,12 @@ class App {
             }).setLngLat([lng, lat])
                 .addTo(this._map)
 
-            inputPosEnding.value = `${lng}, ${lat.toFixed(4)}`
+            inputPosEnding.value = `${lng.toFixed(4)}, ${lat.toFixed(4)}`
             this._markers.push(this._markerEnd)
             this._markerRoutes.push([lng, lat])
-            console.log(this._markerRoutes)
+            // console.log(this._markerRoutes)
             await this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
-            console.log(this._map.getLayer('route')) ////// UNDEFINED?
+            // console.log(this._map.getLayer('route')) ////// UNDEFINED?
             // console.log(this._route) /////// EXISTS
             this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h4 style="color: black">Run in Komotini ${this._distance}km</h4>`)) // add popup
             this._markerEnd.togglePopup()
@@ -334,6 +335,9 @@ class App {
             divOptions.classList.remove('is--hidden')
         }
         this._markerEnd.setDraggable(false)
+        this._markerStart.setDraggable(false)
+        this._removeMapElements()
+        this._setMarkerStart(this._userLng, this._userLat)
 
     }
 
@@ -351,12 +355,12 @@ class App {
           <div class="form_workout-main-bottom">
             <div class="div-block-7">
               <div class="form_workout-stats-wrapper"><img src="https://www.svgrepo.com/show/406153/man-biking-medium-dark-skin-tone.svg" loading="lazy" id="app_cycling-icon" alt="" class="workout-stats-icon is--hidden">
-              <img src="https://www.svgrepo.com/show/400693/running.svg" loading="lazy" id="app_running-icon" alt="" class="workout-stats-icon">
-                <div class="form_workout-distance-label">${workout.distance}</div>
+              <img src="${workout.type === 'running' ? 'https://www.svgrepo.com/show/400693/running.svg' : 'https://uploads-ssl.webflow.com/62fbb644e10f136346d86d9e/630370d60fed0a1883f92513_%F0%9F%9A%B4_%E2%99%80%EF%B8%8F.svg'}" loading="lazy" id="app_running - icon" alt="" class="workout-stats-icon">
+            <div class="form_workout-distance-label"> ${workout.distance}</div>
                 <div class="margin-left margin-xxsmall">
-                  <div class="text-size-tiny">KM</div>
+                    <div class="text-size-tiny">KM</div>
                 </div>
-              </div>
+              </div >
               <div class="form_workout-stats-wrapper">
             <img src="https://www.svgrepo.com/show/112325/timer.svg" loading="lazy" alt="" class="workout-stats-icon-copy">
                 <div class="form_workout-duration-label">${workout.duration}</div>
@@ -376,20 +380,30 @@ class App {
                   <div class="text-size-tiny">°C</div>
                 </div>
               </div>
-            </div>
+            </div >
             <div class="form_workout-edit-wrapper">
-              <div class="form_workout-edit-action"><img src="https://uploads-ssl.webflow.com/62fbb644e10f136346d86d9e/630351b40fed0ac1b5f7acf8_Vector.svg" loading="lazy" alt="" id="button-edit" class="form_workout-edit-img"></div>
-              <div class="form_workout-edit-action"><img src="https://uploads-ssl.webflow.com/62fbb644e10f136346d86d9e/630351b3ee19b62ebdbb93dc_Vector-1.svg" loading="lazy" alt="" id="button-delete" class="form_workout-edit-img"></div>
+                <div class="form_workout-edit-action"><img src="https://uploads-ssl.webflow.com/62fbb644e10f136346d86d9e/630351b40fed0ac1b5f7acf8_Vector.svg" loading="lazy" alt="" id="button-edit" class="form_workout-edit-img"></div>
+                <div class="form_workout-edit-action"><img src="https://uploads-ssl.webflow.com/62fbb644e10f136346d86d9e/630351b3ee19b62ebdbb93dc_Vector-1.svg" loading="lazy" alt="" id="button-delete" class="form_workout-edit-img"></div>
             </div>
-          </div>
-        </div>
-        `
+          </div >
+        </div >
+            `
         divWorkoutList.insertAdjacentHTML('beforeend', this._html)
-        console.log(this._workouts)
 
         divInput.classList.add('is--hidden')
 
 
+    }
+    _removeMapElements() {
+        this._markerStart.remove()
+        if (this._markerEnd) this._markerEnd.remove()
+        this._markerEnd = null
+        if (this._map.getLayer('route')) {
+            this._map.removeLayer('route')
+            this._map.removeSource('route')
+            this._route = []
+        }
+        inputDuration.value = ''
     }
 
     _addNewWorkout() {
@@ -399,29 +413,52 @@ class App {
             console.log(this._workouts)
             return
         }
-        inputDuration.value = ''
-        this._markerStart.remove()
-        this._markerEnd.remove()
-        this._markerEnd = null
-        this._map.removeLayer('route')
-        this._map.removeSource('route')
-        this._route = []
+        selectPos.value = 'currentPos'
+
+        this._removeMapElements()
+        this._setMarkerStart(this._userLng, this._userLat)
+
         divInput.classList.remove('is--hidden')
         labelDurationError.style.opacity = 0
-        console.log("♥♥♥♥♥♥♥♥♥♥♥♥♥")
         inputDuration.focus()
-        this._setMarkerStart(this._userLng, this._userLat)
-        console.log('========debugg=========')
+
         console.log(this._workouts)
 
     }
 
+    // _sortWorkouts(array, attr) {
+    //     divWorkoutList.innerHTML = 'asdasdadads'
+    //     if (attr === 'distance-asc') { array.sort((a, b) => a['distance'] - b['distance']) }
+    //     if (attr === 'distance-dsc') { array.sort((a, b) => b['distance'] - a['distance']) }
+
+    //     divWorkoutList.innerHTML = ''
+    //     console.log(`I want to sort this ${array}`)
+    //     array.forEach(workout => this._renderWorkout(workout))
+    //     // console.log(attr)
+    // }
+
     _deleteWorkout(e) {
-        if (!(e.target.id === 'button-delete')) return
-        const elToDel = e.target.closest('.app_left-form-workout-main')
-        this._workouts = this._workouts.filter(workout => workout._id !== Number(elToDel.dataset.id))
-        divWorkoutList.innerHTML = ''
-        this._workouts.forEach(workout => this._renderWorkout(workout))
+
+        //target delete button of workout
+        if (e.target.id === 'button-delete') {
+            //element to delete
+            const elToDel = e.target.closest('.app_left-form-workout-main')
+            //filter array - keep all the others except the one with the element's id.
+            console.log(`Workout #${elToDel.dataset.id} deleted.`)
+            this._workouts = this._workouts.filter(workout => workout._id !== Number(elToDel.dataset.id))
+            //make space for rendering the list with the remaining workouts
+            divWorkoutList.innerHTML = ''
+            //render the workout for each item in the list.
+            this._workouts.forEach(workout => this._renderWorkout(workout))
+
+            //if there are no workouts - remove UI elements
+            if (this._workouts.length === 0) {
+                this._removeMapElements()
+                console.log('There are no more workouts! Start fresh.')
+                this._setMarkerStart(this._userLng, this._userLat)
+            }
+
+        }
     }
 }
 
