@@ -7,6 +7,7 @@ const selectSort = document.querySelector('#app_form-sortby-select')
 const inputPosEnding = document.querySelector('#app_form-input-ending')
 const inputDuration = document.querySelector('#app_form-input-duration')
 const inputDistance = document.querySelector('#app_form-input-distance-label')
+const inputPosStarting = document.querySelector('[js-input="startingPos"]')
 
 const labelDistance = document.querySelector('.form_workout-distance-label')
 const labelDuration = document.querySelector('.form_workout-duration-label')
@@ -16,7 +17,7 @@ const labelDurationError = document.querySelector('.app_input-label-danger')
 
 const divOptions = document.querySelector('.app_options-component')
 const divInput = document.querySelector('.app_left-form-input')
-const divWorkout = document.querySelector('.app_left-form-workout')
+const divWorkout = document.querySelector('[js-element="workout"]') // first query of an attribute!
 const divBegin = document.querySelector('.app_form-begin')
 const divWrapper = document.querySelector('.app_form-wrapper')
 const divWorkoutList = document.querySelector('.app_left-workout-container')
@@ -25,16 +26,18 @@ const btnConfirm = document.querySelector('#button-save')
 const btnCancel = document.querySelector('#button-cancel')
 const btnDel = document.querySelector('#button-delete')
 const btnEdit = document.querySelector('#button-edit')
+const btnDeleteAll = document.querySelector('[js-element="deleteAll"]')
+const btnSaveEdit = document.querySelector('[js-button="saveEdit"]')
 
 const btnNew = document.querySelector('.app_options-locate-wrapper')
 
-// Workout Clas
+// Workout Class
 // Maybe I should have split into subclasses Running/Cycling. But no real differences besides the 'type' to call super().
 class Workout {
     _id = this._randomNumber(1, 1000)
     _date = new Date()
     _weatherToken = 'c0c4cb552464fc0334187736473c053a'
-    constructor(type, distance, duration, temperature, locationRoad, locationCity, route) {
+    constructor(type, distance, duration, temperature, locationRoad, locationCity, route, geojson) {
         this.type = type
         this.distance = distance
         this.duration = duration
@@ -43,9 +46,8 @@ class Workout {
         this.locationCity = locationCity
         this.route = route
         this._getPace()
+        // this._setGeoJson()
     }
-
-
 
     _randomNumber(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -54,8 +56,6 @@ class Workout {
     _getPace() {
         return this.pace = Number((this.distance / this.duration).toFixed(1))
     }
-
-
 
 }
 
@@ -82,12 +82,20 @@ class App {
     _type;
     _route;
     _html;
+    //State management
+    _isAdding = false; //state while adding a new workout. This should be used to ignore all other stuff while adding.
+    _isShowing = false; //state when showing a route on map
+    _isEditing = false; //state when editing
+    _workoutToEdit;
 
     constructor() {
         this._init()
         btnConfirm.addEventListener('click', this._newWorkout.bind(this))
         btnNew.addEventListener('click', this._addNewWorkout.bind(this))
-        divWrapper.addEventListener('click', this._deleteWorkout.bind(this))
+        divWrapper.addEventListener('click', this._handleWorkout.bind(this))
+        divWorkout.addEventListener('click', this._showWorkoutOnMap)
+        btnDeleteAll.addEventListener('click', this._deleteAllWorkouts.bind(this))
+        btnSaveEdit.addEventListener('click', this._saveEditWorkout.bind(this))
         // selectSort.addEventListener('change', this._sortWorkouts.bind(this, this._workouts, selectSort.value))
     }
 
@@ -97,6 +105,8 @@ class App {
         try {
 
             console.log('Initialization ')
+            btnSaveEdit.style.display = 'none' // hide edit/save button
+            inputPosStarting.style.display = 'none' //hide starting input
             const pos = await this._getPosition().catch(err => console.log(err))
             const { longitude: lng, latitude: lat } = pos.coords
             this._userLng = lng;
@@ -156,6 +166,7 @@ class App {
         this._markerRoutes.push(this._markerStartCoords)
         // Print the marker's longitude and latitude values in the console
         // console.log(this._markerStartCoords)
+        // console.log(this._markerRoutes) ///// ERRRORORSRS
     }
 
     async _setMarkerEnd(e) {
@@ -186,6 +197,7 @@ class App {
             this._markerEnd.togglePopup()
             divBegin.classList.add('is--hidden')
             divInput.classList.remove('is--hidden')
+            this._isAdding = true
             inputDuration.focus()
 
 
@@ -329,7 +341,6 @@ class App {
             workout = new Workout(type, +this._distance, duration, this._temperature, this._locationStreet, this._locationCity, this._route)
         }
         this._workouts.push(workout)
-        // this._workouts.forEach(workout => this._renderWorkout(workout))
         this._renderWorkout(workout)
         if (this._workouts.length > 0) {
             divOptions.classList.remove('is--hidden')
@@ -338,7 +349,8 @@ class App {
         this._markerStart.setDraggable(false)
         this._removeMapElements()
         this._setMarkerStart(this._userLng, this._userLat)
-
+        this._isAdding = false //state while adding a new workout
+        selectPos.value = 'currentPos'
     }
 
     _renderWorkout(workout) {
@@ -384,6 +396,7 @@ class App {
             <div class="form_workout-edit-wrapper">
                 <div class="form_workout-edit-action"><img src="https://uploads-ssl.webflow.com/62fbb644e10f136346d86d9e/630351b40fed0ac1b5f7acf8_Vector.svg" loading="lazy" alt="" id="button-edit" class="form_workout-edit-img"></div>
                 <div class="form_workout-edit-action"><img src="https://uploads-ssl.webflow.com/62fbb644e10f136346d86d9e/630351b3ee19b62ebdbb93dc_Vector-1.svg" loading="lazy" alt="" id="button-delete" class="form_workout-edit-img"></div>
+                <a js-element="viewWorkout" id="button-view" href="#">View</a>
             </div>
           </div >
         </div >
@@ -408,11 +421,12 @@ class App {
 
     _addNewWorkout() {
         // Current Workout Removal process
-        if (!this._map.getLayer('route') || !this._markerEnd || !inputDuration.value) {
+        if (!this._map.getLayer('route') || !this._markerEnd || !inputDuration.value && !this._isShowing) {
             console.log('============naxoui')
             console.log(this._workouts)
             return
         }
+
         selectPos.value = 'currentPos'
 
         this._removeMapElements()
@@ -436,19 +450,69 @@ class App {
     //     array.forEach(workout => this._renderWorkout(workout))
     //     // console.log(attr)
     // }
+    _showRouteOnMap(route) {
+        this._isShowing = true;
 
-    _deleteWorkout(e) {
+        this._removeMapElements() // will probably need to clear the new markers also
+        this._setMarkerStart(route[0][0], route[0][1]) //change to new markers please for display only
+        this._markerEndCoords = [route.at(-1)[0], route.at(-1)[1]]
+        this._markerEnd = new mapboxgl.Marker({
+            color: "#000",
+            draggable: false
+        }).setLngLat(this._markerEndCoords)
+            .addTo(this._map)
 
+        const geojson = {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+                type: 'LineString',
+                coordinates: route
+            }
+        };
+        // if the route already exists on the map, we'll reset it using setData
+        if (this._map.getSource('route')) {
+            this._map.getSource('route').setData(geojson);
+        }
+        // otherwise, we'll make a new request
+        else {
+            this._map.addLayer({
+                id: 'route',
+                type: 'line',
+                source: {
+                    type: 'geojson',
+                    data: geojson
+                },
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                paint: {
+                    'line-color': '#3887be',
+                    // #00C46A running
+                    // cycling
+                    'line-width': 5,
+                    'line-opacity': 0.75
+                }
+            });
+        }
+
+    }
+
+    _handleWorkout(e) {
         //target delete button of workout
+        let parentWorkout = e.target.closest('.app_left-form-workout-main')
+        if (!parentWorkout) return
+        console.log(parentWorkout.dataset.id)
+
+        //Delete Function
         if (e.target.id === 'button-delete') {
             //element to delete
-            const elToDel = e.target.closest('.app_left-form-workout-main')
-            //filter array - keep all the others except the one with the element's id.
-            console.log(`Workout #${elToDel.dataset.id} deleted.`)
-            this._workouts = this._workouts.filter(workout => workout._id !== Number(elToDel.dataset.id))
-            //make space for rendering the list with the remaining workouts
+            this._workouts = this._workouts.filter(workout => workout._id !== Number(parentWorkout.dataset.id))
+            console.log(`Workout #${parentWorkout.dataset.id} deleted.`)
             divWorkoutList.innerHTML = ''
-            //render the workout for each item in the list.
+            this._removeMapElements()
+
             this._workouts.forEach(workout => this._renderWorkout(workout))
 
             //if there are no workouts - remove UI elements
@@ -459,7 +523,71 @@ class App {
             }
 
         }
+
+        //Editing State - Button
+        if (e.target.id === 'button-edit') {
+            console.log('edit mode')
+            this._workoutToEdit = this._workouts.find(workout => workout._id === +parentWorkout.dataset.id)
+            console.log(this._workoutToEdit)
+            this._showRouteOnMap(this._workoutToEdit.route)
+
+            divInput.classList.remove('is--hidden')
+            btnConfirm.style.display = 'none'
+            selectPos.style.display = 'none'
+            inputPosStarting.style.display = 'inline-block'
+            btnSaveEdit.style.display = 'inline-block'
+
+            inputDuration.value = this._workoutToEdit.duration
+            inputDistance.textContent = `Distance: ${this._workoutToEdit.distance} KM`
+            selectType.value = this._workoutToEdit.type
+
+            inputPosStarting.disabled = true;
+            inputPosEnding.disabled = true;
+            inputPosStarting.value = this._workoutToEdit.route.at(0).toString().split(',').join(', ')
+            inputPosEnding.value = this._workoutToEdit.route.at(-1).toString().split(',').join(', ')
+
+
+        }
+
+        //View Function
+        if (e.target.id === 'button-view') {
+            if (this._isAdding) return;
+            let ourWorkout = this._workouts.find(workout => workout._id === +parentWorkout.dataset.id)
+            this._route = ourWorkout.route
+            // console.log(this._route)
+            // console.log(Boolean(this._map.getLayer('route')))
+            this._showRouteOnMap(this._route)
+        }
+
+
     }
+    _deleteAllWorkouts() {
+        console.log(this._workouts)
+        if (this._workouts.length === 0) {
+            console.log('No workouts to delete.')
+            return
+        }
+        this._workouts = []
+        divWorkoutList.innerHTML = ''
+        this._workouts.forEach(workout => this._renderWorkout(workout))
+        this._removeMapElements()
+        console.log(this._userLat, this._userLng)
+        this._setMarkerStart(this._userLng, this._userLat)
+        console.log('All workouts deleted. Click on map to start and add again!')
+        // this._setMarkerStart(this._userLat, this._userLng)
+    }
+
+    _saveEditWorkout(e) {
+        e.preventDefault()
+        console.log(`Edit button saved`)
+        this._workoutToEdit.duration = +inputDuration.value
+        this._workoutToEdit.type = selectType.value
+        console.log(`Our New Workout is Like this`)
+        console.log(this._workoutToEdit)
+    }
+
+
+
 }
 
 
