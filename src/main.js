@@ -96,7 +96,7 @@ class App {
         divWorkout.addEventListener('click', this._showWorkoutOnMap)
         btnDeleteAll.addEventListener('click', this._deleteAllWorkouts.bind(this))
         btnSaveEdit.addEventListener('click', this._saveEditWorkout.bind(this))
-        // selectSort.addEventListener('change', this._sortWorkouts.bind(this, this._workouts, selectSort.value))
+        selectSort.addEventListener('change', this._sortWorkouts.bind(this, selectSort.value))
     }
 
 
@@ -163,7 +163,7 @@ class App {
             .addTo(this._map);
         this._markerStartCoords = Object.values(this._markerStart.getLngLat());
         this._markers.push(this._markerStart)
-        this._markerRoutes.push(this._markerStartCoords)
+        this._markerRoutes.push(this._markerStartCoords) // maybe not needed?
         // Print the marker's longitude and latitude values in the console
         // console.log(this._markerStartCoords)
         // console.log(this._markerRoutes) ///// ERRRORORSRS
@@ -408,7 +408,7 @@ class App {
 
     }
     _removeMapElements() {
-        this._markerStart.remove()
+        if (this._markerStart) this._markerStart.remove()
         if (this._markerEnd) this._markerEnd.remove()
         this._markerEnd = null
         if (this._map.getLayer('route')) {
@@ -421,11 +421,13 @@ class App {
 
     _addNewWorkout() {
         // Current Workout Removal process
+
         if (!this._map.getLayer('route') || !this._markerEnd || !inputDuration.value && !this._isShowing) {
             console.log('============naxoui')
             console.log(this._workouts)
             return
         }
+        // if (!this._setMarkerStart) this._setMarkerStart(this._userLng, this._userLat)
 
         selectPos.value = 'currentPos'
 
@@ -435,21 +437,26 @@ class App {
         divInput.classList.remove('is--hidden')
         labelDurationError.style.opacity = 0
         inputDuration.focus()
+        btnConfirm.style.display = 'inline-block'
+        selectPos.style.display = 'inline-block'
+        inputPosStarting.style.display = 'none'
+        btnSaveEdit.style.display = 'none'
 
         console.log(this._workouts)
 
     }
 
-    // _sortWorkouts(array, attr) {
-    //     divWorkoutList.innerHTML = 'asdasdadads'
-    //     if (attr === 'distance-asc') { array.sort((a, b) => a['distance'] - b['distance']) }
-    //     if (attr === 'distance-dsc') { array.sort((a, b) => b['distance'] - a['distance']) }
+    _sortWorkouts(attr) {
+        divWorkoutList.innerHTML = ''
+        if (attr === 'distance-asc') { this._workouts.sort((a, b) => a['distance'] - b['distance']) }
+        if (attr === 'distance-dsc') { this._workouts.sort((a, b) => b['distance'] - a['distance']) }
 
-    //     divWorkoutList.innerHTML = ''
-    //     console.log(`I want to sort this ${array}`)
-    //     array.forEach(workout => this._renderWorkout(workout))
-    //     // console.log(attr)
-    // }
+        divWorkoutList.innerHTML = ''
+        // console.log(`I want to sort this ${array}`)
+        this._workouts.forEach(workout => this._renderWorkout(workout))
+        // console.log(attr)
+    }
+
     _showRouteOnMap(route) {
         this._isShowing = true;
 
@@ -579,11 +586,19 @@ class App {
 
     _saveEditWorkout(e) {
         e.preventDefault()
-        console.log(`Edit button saved`)
+        if (!(inputDuration.value && inputDuration.value > 0)) {
+            labelDurationError.style.opacity = 1
+            labelDurationError.textContent = `Required`
+            return
+        }
         this._workoutToEdit.duration = +inputDuration.value
         this._workoutToEdit.type = selectType.value
-        console.log(`Our New Workout is Like this`)
-        console.log(this._workoutToEdit)
+        divWorkoutList.innerHTML = ''
+        this._workouts.forEach(workout => this._renderWorkout(workout))
+        // divInput.style.opacity = 0;
+        divInput.classList.add('is--hidden')
+
+
     }
 
 
