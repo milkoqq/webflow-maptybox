@@ -61,7 +61,7 @@ class Workout {
 
 // App Class
 class App {
-    _accessToken = 'pk.eyJ1IjoibWlsa29xcSIsImEiOiJjbDZtZTY3encwMzM3M2JubDFncjgzM2x1In0.LnjZPWDRE_YiImykL9OeMw'
+    _accessToken = 'pk.eyJ1IjoibWlsa29xcSIsImEiOiJjbDliczUwejEwcnd6M3ZtejNpY3BuMTV3In0.88orHaz8EYjsOvloMJQd7Q'
     _distance;
     _fetchType = 'walking'
     _map;
@@ -313,7 +313,6 @@ class App {
 
     _newWorkout(e) {
         e.preventDefault()
-        // console.log(selectType)
 
         if (!(inputDuration.value && inputDuration.value > 0)) {
             labelDurationError.style.opacity = 1
@@ -446,16 +445,16 @@ class App {
 
     }
 
-    _sortWorkouts(attr) {
-        divWorkoutList.innerHTML = ''
-        if (attr === 'distance-asc') { this._workouts.sort((a, b) => a['distance'] - b['distance']) }
-        if (attr === 'distance-dsc') { this._workouts.sort((a, b) => b['distance'] - a['distance']) }
+    // _sortWorkouts(attr) {
+    //     divWorkoutList.innerHTML = ''
+    //     if (attr === 'distance-asc') { this._workouts.sort((a, b) => a['distance'] - b['distance']) }
+    //     if (attr === 'distance-dsc') { this._workouts.sort((a, b) => b['distance'] - a['distance']) }
 
-        divWorkoutList.innerHTML = ''
-        // console.log(`I want to sort this ${array}`)
-        this._workouts.forEach(workout => this._renderWorkout(workout))
-        // console.log(attr)
-    }
+    //     divWorkoutList.innerHTML = ''
+    //     // console.log(`I want to sort this ${array}`)
+    //     this._workouts.forEach(workout => this._renderWorkout(workout))
+    //     // console.log(attr)
+    // }
 
     _showRouteOnMap(route) {
         this._isShowing = true;
@@ -578,7 +577,6 @@ class App {
         divWorkoutList.innerHTML = ''
         this._workouts.forEach(workout => this._renderWorkout(workout))
         this._removeMapElements()
-        console.log(this._userLat, this._userLng)
         this._setMarkerStart(this._userLng, this._userLat)
         console.log('All workouts deleted. Click on map to start and add again!')
         // this._setMarkerStart(this._userLat, this._userLng)
