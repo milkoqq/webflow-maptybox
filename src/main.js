@@ -87,6 +87,7 @@ class App {
     _isShowing = false; //state when showing a route on map
     _isEditing = false; //state when editing
     _workoutToEdit;
+    _displayedWorkout;
 
     constructor() {
         this._init()
@@ -96,7 +97,7 @@ class App {
         divWorkout.addEventListener('click', this._showWorkoutOnMap)
         btnDeleteAll.addEventListener('click', this._deleteAllWorkouts.bind(this))
         btnSaveEdit.addEventListener('click', this._saveEditWorkout.bind(this))
-        selectSort.addEventListener('change', this._sortWorkouts.bind(this, selectSort.value))
+        // selectSort.addEventListener('change', this._sortWorkouts.bind(this, selectSort.value))
     }
 
 
@@ -421,11 +422,12 @@ class App {
     _addNewWorkout() {
         // Current Workout Removal process
 
-        if (!this._map.getLayer('route') || !this._markerEnd || !inputDuration.value && !this._isShowing) {
-            console.log('============naxoui')
-            console.log(this._workouts)
-            return
-        }
+        // if (!this._map.getLayer('route') || !this._markerEnd || !inputDuration.value && !this._isShowing) {
+        //     console.log('============naxoui')
+        //     console.log(this._workouts)
+        //     return
+        // }
+
         // if (!this._setMarkerStart) this._setMarkerStart(this._userLng, this._userLat)
 
         selectPos.value = 'currentPos'
@@ -433,7 +435,7 @@ class App {
         this._removeMapElements()
         this._setMarkerStart(this._userLng, this._userLat)
 
-        divInput.classList.remove('is--hidden')
+        // divInput.classList.remove('is--hidden')
         labelDurationError.style.opacity = 0
         inputDuration.focus()
         btnConfirm.style.display = 'inline-block'
@@ -470,7 +472,9 @@ class App {
 
         const geojson = {
             type: 'Feature',
-            properties: {},
+            properties: {
+                // id: this.
+            },
             geometry: {
                 type: 'LineString',
                 coordinates: route
@@ -517,7 +521,12 @@ class App {
             this._workouts = this._workouts.filter(workout => workout._id !== Number(parentWorkout.dataset.id))
             console.log(`Workout #${parentWorkout.dataset.id} deleted.`)
             divWorkoutList.innerHTML = ''
-            this._removeMapElements()
+
+            console.log(parentWorkout.dataset.id, typeof parentWorkout.dataset.id)
+            console.log(this._displayedWorkout._id, typeof this._displayedWorkout._id)
+            if (+parentWorkout.dataset.id === this._displayedWorkout._id) {
+                this._removeMapElements()
+            }
 
             this._workouts.forEach(workout => this._renderWorkout(workout))
 
@@ -558,9 +567,10 @@ class App {
         //View Function
         if (e.target.id === 'button-view') {
             if (this._isAdding) return;
-            let ourWorkout = this._workouts.find(workout => workout._id === +parentWorkout.dataset.id)
-            this._route = ourWorkout.route
+            this._displayedWorkout = this._workouts.find(workout => workout._id === +parentWorkout.dataset.id)
+            this._route = this._displayedWorkout.route
             // console.log(this._route)
+            console.log(this._displayedWorkout)
             // console.log(Boolean(this._map.getLayer('route')))
             this._showRouteOnMap(this._route)
         }
@@ -595,6 +605,10 @@ class App {
         this._workouts.forEach(workout => this._renderWorkout(workout))
         // divInput.style.opacity = 0;
         divInput.classList.add('is--hidden')
+        this._removeMapElements()
+        // this._setMarkerStart(this._userLng, this._userLat)
+        this._showRouteOnMap(this._workoutToEdit.route)
+
 
 
     }
@@ -607,6 +621,7 @@ class App {
 
 
 const app = new App()
+console.log(app)
 
 //Keep pushing
 
