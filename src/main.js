@@ -91,12 +91,17 @@ class App {
 
     constructor() {
         this._init()
-        btnConfirm.addEventListener('click', this._newWorkout.bind(this))
-        btnNew.addEventListener('click', this._addNewWorkout.bind(this))
+
         divWrapper.addEventListener('click', this._handleWorkout.bind(this))
         divWorkout.addEventListener('click', this._showWorkoutOnMap)
+
+        btnNew.addEventListener('click', this._addNewWorkout.bind(this))
+        btnConfirm.addEventListener('click', this._newWorkout.bind(this))
         btnDeleteAll.addEventListener('click', this._deleteAllWorkouts.bind(this))
         btnSaveEdit.addEventListener('click', this._saveEditWorkout.bind(this))
+        btnCancel.addEventListener('click', this._cancelNewWorkout.bind(this))
+
+
         // selectSort.addEventListener('change', this._sortWorkouts.bind(this, selectSort.value))
     }
 
@@ -351,6 +356,7 @@ class App {
         this._setMarkerStart(this._userLng, this._userLat)
         this._isAdding = false //state while adding a new workout
         selectPos.value = 'currentPos'
+        console.log('Workout added successfully.')
     }
 
     _renderWorkout(workout) {
@@ -420,15 +426,6 @@ class App {
     }
 
     _addNewWorkout() {
-        // Current Workout Removal process
-
-        // if (!this._map.getLayer('route') || !this._markerEnd || !inputDuration.value && !this._isShowing) {
-        //     console.log('============naxoui')
-        //     console.log(this._workouts)
-        //     return
-        // }
-
-        // if (!this._setMarkerStart) this._setMarkerStart(this._userLng, this._userLat)
 
         selectPos.value = 'currentPos'
 
@@ -522,7 +519,7 @@ class App {
             console.log(`Workout #${parentWorkout.dataset.id} deleted.`)
             divWorkoutList.innerHTML = ''
 
-            console.log(parentWorkout.dataset.id, typeof parentWorkout.dataset.id)
+            console.log(parentWorkout.dataset.id, typeof +parentWorkout.dataset.id)
             console.log(this._displayedWorkout._id, typeof this._displayedWorkout._id)
             if (+parentWorkout.dataset.id === this._displayedWorkout._id) {
                 this._removeMapElements()
@@ -542,6 +539,7 @@ class App {
         //Editing State - Button
         if (e.target.id === 'button-edit') {
             console.log('edit mode')
+            this._isEditing = true;
             this._workoutToEdit = this._workouts.find(workout => workout._id === +parentWorkout.dataset.id)
             console.log(this._workoutToEdit)
             this._showRouteOnMap(this._workoutToEdit.route)
@@ -551,6 +549,7 @@ class App {
             selectPos.style.display = 'none'
             inputPosStarting.style.display = 'inline-block'
             btnSaveEdit.style.display = 'inline-block'
+            labelDurationError.style.opacity = 0
 
             inputDuration.value = this._workoutToEdit.duration
             inputDistance.textContent = `Distance: ${this._workoutToEdit.distance} KM`
@@ -578,6 +577,11 @@ class App {
 
     }
     _deleteAllWorkouts() {
+        if (this._isEditing) {
+            console.log('Currently editing workout. Unable to delete all workouts.')
+            return
+        }
+
         console.log(this._workouts)
         if (this._workouts.length === 0) {
             console.log('No workouts to delete.')
@@ -608,20 +612,24 @@ class App {
         this._removeMapElements()
         // this._setMarkerStart(this._userLng, this._userLat)
         this._showRouteOnMap(this._workoutToEdit.route)
-
-
+        console.log('Changes saved successfully')
+        this._isEditing = false;
 
     }
 
 
+    _cancelNewWorkout() {
+        divInput.classList.add('is--hidden')
+        this._removeMapElements()
+        this._setMarkerStart(this._userLng, this._userLat)
+        console.log('Process Cancelled')
+    }
 
 }
 
 
 
-
 const app = new App()
-console.log(app)
 
 //Keep pushing
 
