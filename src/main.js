@@ -165,14 +165,11 @@ class App {
     _setMarkerStart(lng, lat) {
         this._markerStart = new mapboxgl.Marker()
             .setLngLat([lng, lat])
-            .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Current Position'))
+            // .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Current Position'))
             .addTo(this._map);
         this._markerStartCoords = Object.values(this._markerStart.getLngLat());
         this._markers.push(this._markerStart)
         this._markerRoutes.push(this._markerStartCoords) // maybe not needed?
-        // Print the marker's longitude and latitude values in the console
-        // console.log(this._markerStartCoords)
-        // console.log(this._markerRoutes) ///// ERRRORORSRS
     }
 
     async _setMarkerEnd(e) {
@@ -199,7 +196,7 @@ class App {
             await this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
             // console.log(this._map.getLayer('route')) ////// UNDEFINED?
             // console.log(this._route) /////// EXISTS
-            this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h4 style="color: black">Run in Komotini ${this._distance}km</h4>`)) // add popup
+            this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h4 style="color: black">Run in ${this._locationStreet}, ${this._locationCity}. <br> Distance: ${this._distance}km</h4>`)) // add popup
             this._markerEnd.togglePopup()
             divBegin.classList.add('is--hidden')
             divInput.classList.remove('is--hidden')
@@ -215,8 +212,7 @@ class App {
             this._markerEndCoords = Object.values(this._markerEnd.getLngLat());
             inputPosEnding.value = `${this._markerEndCoords[0].toFixed(4)}, ${this._markerEndCoords[1].toFixed(4)}`;
             await this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
-            this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h4 style="color: black">Run in Komotini ${this._distance}km</h4>`)) // add popup
-            this._markerEnd.togglePopup()
+
         }
         this._markerEnd.on('dragend', onDragEnd.bind(this))
 
@@ -242,7 +238,6 @@ class App {
 
     _updateMarkerStartCoords() {
         this._markerStartCoords = Object.values(this._markerStart.getLngLat())
-        console.log(this._markerStartCoords)
         this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
 
     }
@@ -314,6 +309,8 @@ class App {
                 }
             });
         }
+        this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h4 style="color: black">Run in ${this._locationStreet}, ${this._locationCity}. <br> Distance: ${this._distance}km</h4>`)) // add popup
+        this._markerEnd.togglePopup()
 
     }
 
@@ -519,8 +516,8 @@ class App {
             console.log(`Workout #${parentWorkout.dataset.id} deleted.`)
             divWorkoutList.innerHTML = ''
 
-            console.log(parentWorkout.dataset.id, typeof +parentWorkout.dataset.id)
-            console.log(this._displayedWorkout._id, typeof this._displayedWorkout._id)
+            // console.log(parentWorkout.dataset.id, typeof parentWorkout.dataset.id) // REMOVAL 
+            // console.log(this._displayedWorkout._id, typeof this._displayedWorkout._id) // REMOVAL
             if (+parentWorkout.dataset.id === this._displayedWorkout._id) {
                 this._removeMapElements()
             }
