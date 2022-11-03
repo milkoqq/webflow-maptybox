@@ -346,6 +346,7 @@ class App {
         }
         console.log(workout)
         this._workouts.push(workout)
+        console.log(typeof workout._date)
         this._renderWorkout(workout)
         if (this._workouts.length > 0) {
             divOptions.classList.remove('is--hidden')
@@ -362,13 +363,16 @@ class App {
     }
 
     _renderWorkout(workout) {
-        console.log(workout._date)
+        // workout._date = new Date(workout._date)
+        // console.log(typeof workout._date)
+
         this._html = `
         <div class="app_left-form-workout">
         <div class="app_left-form-workout-side is--${workout.type}"></div>
         <div class="app_left-form-workout-main" data-id="${workout._id}">
           <div class="form_workout-main-top">
-            <div class="text-size-small">${String(workout._date.getDate())} ${this._months[workout._date.getMonth()]} ${workout._date.getFullYear()}</div>
+          <div class="text-size-small">${String(workout._date.getDate())} ${this._months[workout._date.getMonth()]} ${workout._date.getFullYear()}</div>
+
           </div>
           <div class="form_workout-main-mid">
             <div class="text-block-5">Running in <span class="text-span">${workout.locationRoad}, ${workout.locationCity}.</span></div>
@@ -663,18 +667,17 @@ class App {
     //     if (!data) return
 
     //     data.forEach(workout => {
-    //         workout = new Workout(workout.type, workout.distance, workout.duration, workout.temperature, workout.locationRoad, workout.locationCity, workout.route, workout.geojson, workout._date)
-    //         console.log(workout._date)
+    //         //THEY ARE OBJECTS INDEED
+    //         workout = new Workout(workout.type, workout.distance, workout.duration, workout.temperature, workout.locationRoad, workout.locationCity, workout.route, workout.geojson)
 
     //     })
 
     //     this._workouts = data
     //     this._workouts.forEach(workout => {
-    //         console.log(workout._date)
 
+    //         this._renderWorkout(workout)
     //     })
-
-    //     // this._workouts.forEach(workout => this._renderWorkout(workout))
+    //     console.log(this._workouts)
     // }
 
 }
