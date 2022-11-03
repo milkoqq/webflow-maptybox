@@ -1,4 +1,7 @@
 "use strict";
+import Toastify from 'toastify-js'
+import "toastify-js/src/toastify.css"
+
 // DOM Elements
 const selectPos = document.querySelector('#app_form-position-select')
 const selectType = document.querySelector('#app_form-type-select')
@@ -119,7 +122,6 @@ class App {
             const { longitude: lng, latitude: lat } = pos.coords
             this._userLng = lng;
             this._userLat = lat;
-            // console.log(lng, lat)
             await this._loadMap(lng, lat)
             this._setMarkerStart(lng, lat)
             this._map.on('click', this._setMarkerEnd.bind(this))
@@ -198,7 +200,7 @@ class App {
             await this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
             // console.log(this._map.getLayer('route')) ////// UNDEFINED?
             // console.log(this._route) /////// EXISTS
-            this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h4 style="color: black">Run in ${this._locationStreet}, ${this._locationCity}. <br> Distance: ${this._distance}km</h4>`)) // add popup
+            this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h5 style="color: black">Run in ${this._locationStreet}, ${this._locationCity}. <br> Distance: ${this._distance}km</h5>`)) // add popup
             this._markerEnd.togglePopup()
             divBegin.classList.add('is--hidden')
             divInput.classList.remove('is--hidden')
@@ -311,7 +313,7 @@ class App {
                 }
             });
         }
-        this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h4 style="color: black">Run in ${this._locationStreet}, ${this._locationCity}. <br> Distance: ${this._distance}km</h4>`)) // add popup
+        this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h5 style="color: black">Run in ${this._locationStreet}, ${this._locationCity}. <br> Distance: ${this._distance}km</h5>`)) // add popup
         this._markerEnd.togglePopup()
 
     }
@@ -344,9 +346,7 @@ class App {
         if (type === 'cycling') {
             workout = new Workout(type, +this._distance, duration, this._temperature, this._locationStreet, this._locationCity, this._route)
         }
-        console.log(workout)
         this._workouts.push(workout)
-        console.log(typeof workout._date)
         this._renderWorkout(workout)
         if (this._workouts.length > 0) {
             divOptions.classList.remove('is--hidden')
@@ -359,13 +359,19 @@ class App {
         // localStorage.setItem('workouts', JSON.stringify(this._workouts))
         this._isAdding = false //state while adding a new workout
         selectPos.value = 'currentPos'
-        console.log('Workout added successfully.')
+        // console.log('Workout added successfully.')
+        Toastify({
+            text: "Workout added successfully.",
+            duration: 1000,
+            style: {
+                background: `rgba(19, 189, 0, 1)`,
+                color: 'white'
+            },
+        }).showToast();
     }
 
     _renderWorkout(workout) {
-        // workout._date = new Date(workout._date)
-        // console.log(typeof workout._date)
-
+        workout._date = new Date(workout._date)
         this._html = `
         <div class="app_left-form-workout">
         <div class="app_left-form-workout-side is--${workout.type}"></div>
@@ -544,35 +550,49 @@ class App {
         //target delete button of workout
         let parentWorkout = e.target.closest('.app_left-form-workout-main')
         if (!parentWorkout) return
-        console.log(parentWorkout.dataset.id)
 
         //Delete Function
         if (e.target.id === 'button-delete') {
             //element to delete
+            if (this._isEditing) return
             this._workouts = this._workouts.filter(workout => workout._id !== Number(parentWorkout.dataset.id))
+
+            //todo: Alert message
             console.log(`Workout #${parentWorkout.dataset.id} deleted.`)
+            Toastify({
+                text: `Workout deleted.`,
+                duration: 1000,
+                style: {
+                    background: `rgba(255, 102, 25, 1)`,
+                    color: 'white'
+                },
+            }).showToast();
+
             divWorkoutList.innerHTML = ''
 
-            // console.log(parentWorkout.dataset.id, typeof parentWorkout.dataset.id) // REMOVAL 
-            // console.log(this._displayedWorkout._id, typeof this._displayedWorkout._id) // REMOVAL
-            if (+parentWorkout.dataset.id === this._displayedWorkout._id) {
-                this._removeMapElements()
+            if (this._isShowing) {
+                if (+parentWorkout.dataset.id === this._displayedWorkout._id) {
+                    this._removeMapElements()
+
+                }
             }
+
 
             this._workouts.forEach(workout => this._renderWorkout(workout))
 
             //if there are no workouts - remove UI elements
             if (this._workouts.length === 0) {
                 this._removeMapElements()
+                //todo: Alert message
                 console.log('There are no more workouts! Start fresh.')
+
                 this._setMarkerStart(this._userLng, this._userLat)
             }
 
         }
-
         //Editing State - Button
         if (e.target.id === 'button-edit') {
-            console.log('edit mode')
+            // console.log('edit mode')
             this._isEditing = true;
             this._workoutToEdit = this._workouts.find(workout => workout._id === +parentWorkout.dataset.id)
             console.log(this._workoutToEdit)
@@ -612,13 +632,31 @@ class App {
     }
     _deleteAllWorkouts() {
         if (this._isEditing) {
+            //todo: alert message
             console.log('Currently editing workout. Unable to delete all workouts.')
+            Toastify({
+                text: `Currently editing workout. Unable to delete all workouts.`,
+                duration: 2000,
+                style: {
+                    background: `rgba(189, 126, 0, 1)`,
+                    color: 'white'
+                },
+            }).showToast();
             return
         }
 
         console.log(this._workouts)
         if (this._workouts.length === 0) {
+            //todo: alert message
             console.log('No workouts to delete.')
+            Toastify({
+                text: `No workouts to delete.`,
+                duration: 1000,
+                style: {
+                    background: `rgba(189, 126, 0, 1)`,
+                    color: 'white'
+                },
+            }).showToast();
             return
         }
         this._workouts = []
@@ -626,8 +664,16 @@ class App {
         this._workouts.forEach(workout => this._renderWorkout(workout))
         this._removeMapElements()
         this._setMarkerStart(this._userLng, this._userLat)
+        //todo: alert message
         console.log('All workouts deleted. Click on map to start and add again!')
-        // this._setMarkerStart(this._userLat, this._userLng)
+        Toastify({
+            text: `All workouts deleted.`,
+            duration: 2000,
+            style: {
+                background: `rgba(255, 102, 25, 1)`,
+                color: 'white'
+            },
+        }).showToast();
     }
 
     _saveEditWorkout(e) {
@@ -644,9 +690,17 @@ class App {
         // divInput.style.opacity = 0;
         divInput.classList.add('is--hidden')
         this._removeMapElements()
-        // this._setMarkerStart(this._userLng, this._userLat)
         this._showRouteOnMap(this._workoutToEdit.route)
+        //todo: alert message
         console.log('Changes saved successfully')
+        Toastify({
+            text: "Workout saved successfully.",
+            duration: 1000,
+            style: {
+                background: `rgba(19, 189, 0, 1)`,
+                color: 'white'
+            },
+        }).showToast();
         this._isEditing = false;
 
     }
@@ -656,7 +710,16 @@ class App {
         divInput.classList.add('is--hidden')
         this._removeMapElements()
         this._setMarkerStart(this._userLng, this._userLat)
+        //todo: alert message
         console.log('Process Cancelled')
+        Toastify({
+            text: `Process Cancelled`,
+            duration: 1000,
+            style: {
+                background: `rgba(189, 126, 0, 1)`,
+                color: 'white'
+            },
+        }).showToast();
         this._isEditing = false
     }
 
@@ -667,7 +730,6 @@ class App {
     //     if (!data) return
 
     //     data.forEach(workout => {
-    //         //THEY ARE OBJECTS INDEED
     //         workout = new Workout(workout.type, workout.distance, workout.duration, workout.temperature, workout.locationRoad, workout.locationCity, workout.route, workout.geojson)
 
     //     })
@@ -684,8 +746,6 @@ class App {
 
 
 
-
 const app = new App()
 
-//Keep pushing
 
