@@ -57,11 +57,12 @@ class Workout {
         return this.pace = Number((this.distance / this.duration).toFixed(1))
     }
 
+
 }
 
 // App Class
 class App {
-    _accessToken = 'pk.eyJ1IjoibWlsa29xcSIsImEiOiJjbDliczUwejEwcnd6M3ZtejNpY3BuMTV3In0.88orHaz8EYjsOvloMJQd7Q'
+    #accessToken = 'pk.eyJ1IjoibWlsa29xcSIsImEiOiJjbDliczUwejEwcnd6M3ZtejNpY3BuMTV3In0.88orHaz8EYjsOvloMJQd7Q'
     _distance;
     _fetchType = 'walking'
     _map;
@@ -101,8 +102,9 @@ class App {
         btnSaveEdit.addEventListener('click', this._saveEditWorkout.bind(this))
         btnCancel.addEventListener('click', this._cancelNewWorkout.bind(this))
 
+        // this._loadLocalStorage()
 
-        // selectSort.addEventListener('change', this._sortWorkouts.bind(this, selectSort.value))
+        selectSort.addEventListener('change', this._sortWorkouts.bind(this))
     }
 
 
@@ -148,7 +150,7 @@ class App {
         try {
             // Get Map with position coords.
             this._map = new mapboxgl.Map({
-                accessToken: this._accessToken,
+                accessToken: this.#accessToken,
                 container: 'map',
                 style: 'mapbox://styles/mapbox/streets-v11',
                 center: [lng, lat], // starting position
@@ -253,13 +255,13 @@ class App {
     async _fetchRoute(start, end) {
 
         // let [jsonDir, jsonTemp] = await Promise.allSettled([
-        //     this._getJSON(`https://api.mapbox.com/directions/v5/mapbox/${this._fetchType}/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${this._accessToken}`),
+        //     this._getJSON(`https://api.mapbox.com/directions/v5/mapbox/${this._fetchType}/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${this.#accessToken}`),
         //     this._getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${start[1]}&longitude=${start[0]}&hourly=temperature_2m&current_weather=true`)
         // ])
         // why the fuck it doesn't work atm idk.
 
         const queryDir = await fetch(
-            `https://api.mapbox.com/directions/v5/mapbox/${this._fetchType}/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${this._accessToken}`
+            `https://api.mapbox.com/directions/v5/mapbox/${this._fetchType}/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${this.#accessToken}`
         );
         const queryTemp = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${start[1]}&longitude=${start[0]}&hourly=temperature_2m&current_weather=true`)
         const queryLoc = await fetch(`https://api.geoapify.com/v1/geocode/reverse?lat=${end[1]}&lon=${end[0]}&apiKey=ae4d111379a849988e6112880aba2273`)
@@ -342,6 +344,7 @@ class App {
         if (type === 'cycling') {
             workout = new Workout(type, +this._distance, duration, this._temperature, this._locationStreet, this._locationCity, this._route)
         }
+        console.log(workout)
         this._workouts.push(workout)
         this._renderWorkout(workout)
         if (this._workouts.length > 0) {
@@ -351,17 +354,20 @@ class App {
         this._markerStart.setDraggable(false)
         this._removeMapElements()
         this._setMarkerStart(this._userLng, this._userLat)
+        //save to local storage
+        // localStorage.setItem('workouts', JSON.stringify(this._workouts))
         this._isAdding = false //state while adding a new workout
         selectPos.value = 'currentPos'
         console.log('Workout added successfully.')
     }
 
     _renderWorkout(workout) {
+        console.log(workout._date)
         this._html = `
         <div class="app_left-form-workout">
         <div class="app_left-form-workout-side is--${workout.type}"></div>
         <div class="app_left-form-workout-main" data-id="${workout._id}">
-          <div class="form_workout-main-top" >
+          <div class="form_workout-main-top">
             <div class="text-size-small">${String(workout._date.getDate())} ${this._months[workout._date.getMonth()]} ${workout._date.getFullYear()}</div>
           </div>
           <div class="form_workout-main-mid">
@@ -437,20 +443,47 @@ class App {
         inputPosStarting.style.display = 'none'
         btnSaveEdit.style.display = 'none'
 
+
         console.log(this._workouts)
 
     }
 
-    // _sortWorkouts(attr) {
-    //     divWorkoutList.innerHTML = ''
-    //     if (attr === 'distance-asc') { this._workouts.sort((a, b) => a['distance'] - b['distance']) }
-    //     if (attr === 'distance-dsc') { this._workouts.sort((a, b) => b['distance'] - a['distance']) }
 
-    //     divWorkoutList.innerHTML = ''
-    //     // console.log(`I want to sort this ${array}`)
-    //     this._workouts.forEach(workout => this._renderWorkout(workout))
-    //     // console.log(attr)
-    // }
+
+    _sortWorkouts(e) {
+        if (this._workouts.length === 0) {
+            console.log(selectSort.value)
+            console.log('No workouts to sort. Please add a workout')
+            selectSort.value === 'default'
+            return
+        }
+        divWorkoutList.innerHTML = ''
+        if (selectSort.value === 'distance-asc') {
+            console.log(`Workouts sorted based on Distance Ascending`)
+            this._workouts.sort((a, b) => a['distance'] - b['distance'])
+        }
+        if (selectSort.value === 'distance-dsc') {
+            console.log(`Workouts sorted based on Distance Descendants`)
+            this._workouts.sort((a, b) => b['distance'] - a['distance'])
+        }
+        if (selectSort.value === 'duration-asc') {
+            console.log(`Workouts sorted based on Distance Ascending`)
+            this._workouts.sort((a, b) => a['duration'] - b['duration'])
+        }
+        if (selectSort.value === 'duration-dsc') {
+            console.log(`Workouts sorted based on Distance Descendants`)
+            this._workouts.sort((a, b) => b['duration'] - a['duration'])
+        }
+        if (selectSort.value === 'pace-asc') {
+            console.log(`Workouts sorted based on Distance Descendants`)
+            this._workouts.sort((a, b) => b['duration'] - a['duration'])
+        }
+        if (selectSort.value === 'pace-dsc') {
+            console.log(`Workouts sorted based on Distance Descendants`)
+            this._workouts.sort((a, b) => b['duration'] - a['duration'])
+        }
+        this._workouts.forEach(workout => this._renderWorkout(workout))
+    }
 
     _showRouteOnMap(route) {
         this._isShowing = true;
@@ -620,9 +653,32 @@ class App {
         this._removeMapElements()
         this._setMarkerStart(this._userLng, this._userLat)
         console.log('Process Cancelled')
+        this._isEditing = false
     }
 
+    // _loadLocalStorage() {
+
+    //     const data = JSON.parse(localStorage.getItem('workouts'))
+
+    //     if (!data) return
+
+    //     data.forEach(workout => {
+    //         workout = new Workout(workout.type, workout.distance, workout.duration, workout.temperature, workout.locationRoad, workout.locationCity, workout.route, workout.geojson, workout._date)
+    //         console.log(workout._date)
+
+    //     })
+
+    //     this._workouts = data
+    //     this._workouts.forEach(workout => {
+    //         console.log(workout._date)
+
+    //     })
+
+    //     // this._workouts.forEach(workout => this._renderWorkout(workout))
+    // }
+
 }
+
 
 
 
