@@ -20,3 +20,7 @@
 .js-badge:hover {
   background-color: rgb(228, 137, 193);
 }
+
+body {
+  background-color: black;
+}

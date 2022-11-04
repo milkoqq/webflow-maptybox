@@ -66,32 +66,33 @@ class Workout {
 // App Class
 class App {
     #accessToken = 'pk.eyJ1IjoibWlsa29xcSIsImEiOiJjbDliczUwejEwcnd6M3ZtejNpY3BuMTV3In0.88orHaz8EYjsOvloMJQd7Q'
-    _distance;
-    _fetchType = 'walking'
-    _map;
-    _mapZoomLevel = 13
-    _markers = []
-    _markerStart;
-    _markerStartCoords;
-    _markerEnd;
-    _markerEndCoords;
-    _markerRoutes = []
-    _months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    _userLng;
-    _userLat;
-    _temperature;
-    _locationCity;
-    _locationStreet;
-    _workouts = [];
-    _type;
-    _route;
-    _html;
+    #distance;
+    #fetchtype = 'walking'
+    #map;
+    #mapZoomLevel = 13
+    #markers = []
+    #markerStart;
+    #markerStartCoords;
+    #markerEnd;
+    #markerEndCoords;
+    #markerRoutes = []
+    #userLng;
+    #userLat;
+    #temperature;
+    #locationCity;
+    #locationStreet;
+    #workouts = [];
+    #type;
+    #route;
+    #html;
     //State management
     _isAdding = false; //state while adding a new workout. This should be used to ignore all other stuff while adding.
     _isShowing = false; //state when showing a route on map
     _isEditing = false; //state when editing
     _workoutToEdit;
     _displayedWorkout;
+    _months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
 
     constructor() {
         this._init()
@@ -120,11 +121,11 @@ class App {
             inputPosStarting.style.display = 'none' //hide starting input
             const pos = await this._getPosition().catch(err => console.log(err))
             const { longitude: lng, latitude: lat } = pos.coords
-            this._userLng = lng;
-            this._userLat = lat;
+            this.#userLng = lng;
+            this.#userLat = lat;
             await this._loadMap(lng, lat)
             this._setMarkerStart(lng, lat)
-            this._map.on('click', this._setMarkerEnd.bind(this))
+            this.#map.on('click', this._setMarkerEnd.bind(this))
             selectPos.addEventListener('change', this._setMarkerStartToDrag.bind(this))
         }
         catch (e) {
@@ -151,12 +152,12 @@ class App {
     async _loadMap(lng, lat) {
         try {
             // Get Map with position coords.
-            this._map = new mapboxgl.Map({
+            this.#map = new mapboxgl.Map({
                 accessToken: this.#accessToken,
                 container: 'map',
                 style: 'mapbox://styles/mapbox/streets-v11',
                 center: [lng, lat], // starting position
-                zoom: this._mapZoomLevel
+                zoom: this.#mapZoomLevel
             });
 
         }
@@ -167,41 +168,41 @@ class App {
     }
 
     _setMarkerStart(lng, lat) {
-        this._markerStart = new mapboxgl.Marker()
+        this.#markerStart = new mapboxgl.Marker()
             .setLngLat([lng, lat])
             // .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Current Position'))
-            .addTo(this._map);
-        this._markerStartCoords = Object.values(this._markerStart.getLngLat());
-        this._markers.push(this._markerStart)
-        this._markerRoutes.push(this._markerStartCoords) // maybe not needed?
+            .addTo(this.#map);
+        this.#markerStartCoords = Object.values(this.#markerStart.getLngLat());
+        this.#markers.push(this.#markerStart)
+        this.#markerRoutes.push(this.#markerStartCoords) // maybe not needed?
     }
 
     async _setMarkerEnd(e) {
 
 
         // Set Marker End if it doesn't exist.
-        if (!this._markerEnd) {
+        if (!this.#markerEnd) {
             // Get Lng/Lat positions from click on map
             let { lng, lat } = e.lngLat
 
             // Assigning to global property markerEndCoords.
-            this._markerEndCoords = [lng, lat]
+            this.#markerEndCoords = [lng, lat]
 
-            this._markerEnd = new mapboxgl.Marker({
+            this.#markerEnd = new mapboxgl.Marker({
                 color: "#FFFFFF",
                 draggable: true
             }).setLngLat([lng, lat])
-                .addTo(this._map)
+                .addTo(this.#map)
 
             inputPosEnding.value = `${lng.toFixed(4)}, ${lat.toFixed(4)}`
-            this._markers.push(this._markerEnd)
-            this._markerRoutes.push([lng, lat])
-            // console.log(this._markerRoutes)
-            await this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
-            // console.log(this._map.getLayer('route')) ////// UNDEFINED?
-            // console.log(this._route) /////// EXISTS
-            this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h5 style="color: black">Run in ${this._locationStreet}, ${this._locationCity}. <br> Distance: ${this._distance}km</h5>`)) // add popup
-            this._markerEnd.togglePopup()
+            this.#markers.push(this.#markerEnd)
+            this.#markerRoutes.push([lng, lat])
+            // console.log(this.#markerRoutes)
+            await this._fetchRoute(this.#markerStartCoords, this.#markerEndCoords)
+            // console.log(this.#map.getLayer('route')) ////// UNDEFINED?
+            // console.log(this.#route) /////// EXISTS
+            this.#markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h5 style="color: black">Run in ${this.#locationStreet}, ${this.#locationCity}. <br> Distance: ${this.#distance}km</h5>`)) // add popup
+            this.#markerEnd.togglePopup()
             divBegin.classList.add('is--hidden')
             divInput.classList.remove('is--hidden')
             this._isAdding = true
@@ -213,36 +214,36 @@ class App {
         async function onDragEnd() {
             // Function fires when dragging of 2nd marker stops.
             // Get new Lng/Lat from Marker
-            this._markerEndCoords = Object.values(this._markerEnd.getLngLat());
-            inputPosEnding.value = `${this._markerEndCoords[0].toFixed(4)}, ${this._markerEndCoords[1].toFixed(4)}`;
-            await this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
+            this.#markerEndCoords = Object.values(this.#markerEnd.getLngLat());
+            inputPosEnding.value = `${this.#markerEndCoords[0].toFixed(4)}, ${this.#markerEndCoords[1].toFixed(4)}`;
+            await this._fetchRoute(this.#markerStartCoords, this.#markerEndCoords)
 
         }
-        this._markerEnd.on('dragend', onDragEnd.bind(this))
+        this.#markerEnd.on('dragend', onDragEnd.bind(this))
 
 
     }
 
     _setMarkerStartToDrag() {
         if (selectPos.value === 'dragToPos') {
-            this._markerStart.setDraggable(true)
-            // console.log(this._markerStart.isDraggable())
-            this._markerStart.on('dragend', this._updateMarkerStartCoords.bind(this))
+            this.#markerStart.setDraggable(true)
+            // console.log(this.#markerStart.isDraggable())
+            this.#markerStart.on('dragend', this._updateMarkerStartCoords.bind(this))
 
 
         }
 
         if (selectPos.value === 'currentPos') {
-            this._markerStart.remove()
-            this._setMarkerStart(this._userLng, this._userLat)
-            this._markerStartCoords = Object.values(this._markerStart.getLngLat())
-            this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
+            this.#markerStart.remove()
+            this._setMarkerStart(this.#userLng, this.#userLat)
+            this.#markerStartCoords = Object.values(this.#markerStart.getLngLat())
+            this._fetchRoute(this.#markerStartCoords, this.#markerEndCoords)
         }
     }
 
     _updateMarkerStartCoords() {
-        this._markerStartCoords = Object.values(this._markerStart.getLngLat())
-        this._fetchRoute(this._markerStartCoords, this._markerEndCoords)
+        this.#markerStartCoords = Object.values(this.#markerStart.getLngLat())
+        this._fetchRoute(this.#markerStartCoords, this.#markerEndCoords)
 
     }
 
@@ -257,45 +258,45 @@ class App {
     async _fetchRoute(start, end) {
 
         // let [jsonDir, jsonTemp] = await Promise.allSettled([
-        //     this._getJSON(`https://api.mapbox.com/directions/v5/mapbox/${this._fetchType}/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${this.#accessToken}`),
+        //     this._getJSON(`https://api.mapbox.com/directions/v5/mapbox/${this.#fetchtype}/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${this.#accessToken}`),
         //     this._getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${start[1]}&longitude=${start[0]}&hourly=temperature_2m&current_weather=true`)
         // ])
         // why the fuck it doesn't work atm idk.
 
         const queryDir = await fetch(
-            `https://api.mapbox.com/directions/v5/mapbox/${this._fetchType}/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${this.#accessToken}`
+            `https://api.mapbox.com/directions/v5/mapbox/${this.#fetchtype}/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${this.#accessToken}`
         );
         const queryTemp = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${start[1]}&longitude=${start[0]}&hourly=temperature_2m&current_weather=true`)
         const queryLoc = await fetch(`https://api.geoapify.com/v1/geocode/reverse?lat=${end[1]}&lon=${end[0]}&apiKey=ae4d111379a849988e6112880aba2273`)
         const jsonTemp = await queryTemp.json()
         const jsonDir = await queryDir.json();
         const locTemp = await queryLoc.json()
-        this._locationStreet = locTemp.features[0].properties.street ?? locTemp.features[0].properties.address_line1 ?? locTemp.features[0].properties.address_line2
-        this._locationCity = locTemp.features[0].properties.city ?? locTemp.features[0].properties.country
+        this.#locationStreet = locTemp.features[0].properties.street ?? locTemp.features[0].properties.address_line1 ?? locTemp.features[0].properties.address_line2
+        this.#locationCity = locTemp.features[0].properties.city ?? locTemp.features[0].properties.country
         // console.log(jsonDir)
         // console.log(queryTemp, jsonTemp)
         // console.log(queryLoc, locTemp)
         const data = jsonDir.routes[0];
-        this._distance = (data.distance / 1000).toFixed(2)
-        this._temperature = jsonTemp.current_weather.temperature
-        // console.log(this._temperature)con
-        inputDistance.textContent = `Distance: ${this._distance}km`
-        this._route = data.geometry.coordinates;
+        this.#distance = (data.distance / 1000).toFixed(2)
+        this.#temperature = jsonTemp.current_weather.temperature
+        // console.log(this.#temperature)con
+        inputDistance.textContent = `Distance: ${this.#distance}km`
+        this.#route = data.geometry.coordinates;
         const geojson = {
             type: 'Feature',
             properties: {},
             geometry: {
                 type: 'LineString',
-                coordinates: this._route
+                coordinates: this.#route
             }
         };
         // if the route already exists on the map, we'll reset it using setData
-        if (this._map.getSource('route')) {
-            this._map.getSource('route').setData(geojson);
+        if (this.#map.getSource('route')) {
+            this.#map.getSource('route').setData(geojson);
         }
         // otherwise, we'll make a new request
         else {
-            this._map.addLayer({
+            this.#map.addLayer({
                 id: 'route',
                 type: 'line',
                 source: {
@@ -313,8 +314,8 @@ class App {
                 }
             });
         }
-        this._markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h5 style="color: black">Run in ${this._locationStreet}, ${this._locationCity}. <br> Distance: ${this._distance}km</h5>`)) // add popup
-        this._markerEnd.togglePopup()
+        this.#markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h5 style="color: black">Run in ${this.#locationStreet}, ${this.#locationCity}. <br> Distance: ${this.#distance}km</h5>`)) // add popup
+        this.#markerEnd.togglePopup()
 
     }
 
@@ -327,36 +328,37 @@ class App {
             return
         }
 
-        if (!this._markerEnd) {
+        if (!this.#markerEnd) {
             console.log("Set an ending-route marker on map!")
             return
         }
 
         // Get data from form.
-        // already global: _distance, _temperature
+        // already global: #distance, #temperature
         const type = selectType.value
         const duration = +inputDuration.value
         let workout;
 
 
         if (type === 'running') {
-            workout = new Workout(type, +this._distance, duration, this._temperature, this._locationStreet, this._locationCity, this._route)
+            workout = new Workout(type, +this.#distance, duration, this.#temperature, this.#locationStreet, this.#locationCity, this.#route)
         }
 
         if (type === 'cycling') {
-            workout = new Workout(type, +this._distance, duration, this._temperature, this._locationStreet, this._locationCity, this._route)
+            workout = new Workout(type, +this.#distance, duration, this.#temperature, this.#locationStreet, this.#locationCity, this.#route)
         }
-        this._workouts.push(workout)
+        this.#workouts.push(workout)
         this._renderWorkout(workout)
-        if (this._workouts.length > 0) {
+        if (this.#workouts.length > 0) {
             divOptions.classList.remove('is--hidden')
         }
-        this._markerEnd.setDraggable(false)
-        this._markerStart.setDraggable(false)
+        this.#markerEnd.setDraggable(false)
+        this.#markerStart.setDraggable(false)
         this._removeMapElements()
-        this._setMarkerStart(this._userLng, this._userLat)
+        this._setMarkerStart(this.#userLng, this.#userLat)
+        labelDurationError.style.opacity = 0
         //save to local storage
-        // localStorage.setItem('workouts', JSON.stringify(this._workouts))
+        // localStorage.setItem('workouts', JSON.stringify(this.#workouts))
         this._isAdding = false //state while adding a new workout
         selectPos.value = 'currentPos'
         // console.log('Workout added successfully.')
@@ -368,11 +370,12 @@ class App {
                 color: 'white'
             },
         }).showToast();
+
     }
 
     _renderWorkout(workout) {
         workout._date = new Date(workout._date)
-        this._html = `
+        this.#html = `
         <div class="app_left-form-workout">
         <div class="app_left-form-workout-side is--${workout.type}"></div>
         <div class="app_left-form-workout-main" data-id="${workout._id}">
@@ -420,20 +423,20 @@ class App {
           </div >
         </div >
             `
-        divWorkoutList.insertAdjacentHTML('beforeend', this._html)
+        divWorkoutList.insertAdjacentHTML('beforeend', this.#html)
 
         divInput.classList.add('is--hidden')
 
 
     }
     _removeMapElements() {
-        if (this._markerStart) this._markerStart.remove()
-        if (this._markerEnd) this._markerEnd.remove()
-        this._markerEnd = null
-        if (this._map.getLayer('route')) {
-            this._map.removeLayer('route')
-            this._map.removeSource('route')
-            this._route = []
+        if (this.#markerStart) this.#markerStart.remove()
+        if (this.#markerEnd) this.#markerEnd.remove()
+        this.#markerEnd = null
+        if (this.#map.getLayer('route')) {
+            this.#map.removeLayer('route')
+            this.#map.removeSource('route')
+            this.#route = []
         }
         inputDuration.value = ''
     }
@@ -443,7 +446,7 @@ class App {
         selectPos.value = 'currentPos'
 
         this._removeMapElements()
-        this._setMarkerStart(this._userLng, this._userLat)
+        this._setMarkerStart(this.#userLng, this.#userLat)
 
         // divInput.classList.remove('is--hidden')
         labelDurationError.style.opacity = 0
@@ -453,46 +456,99 @@ class App {
         inputPosStarting.style.display = 'none'
         btnSaveEdit.style.display = 'none'
 
-
-        console.log(this._workouts)
-
     }
 
 
 
     _sortWorkouts(e) {
-        if (this._workouts.length === 0) {
+        if (this.#workouts.length <= 1) {
             console.log(selectSort.value)
             console.log('No workouts to sort. Please add a workout')
-            selectSort.value === 'default'
+            Toastify({
+                text: `No workouts to sort. \n\ Please add more than 1 workouts.`,
+                duration: 2000,
+                style: {
+                    background: `rgba(255, 102, 25, 1)`,
+                    color: 'white'
+                },
+            }).showToast();
+            selectSort.value = 'default'
             return
         }
         divWorkoutList.innerHTML = ''
-        if (selectSort.value === 'distance-asc') {
-            console.log(`Workouts sorted based on Distance Ascending`)
-            this._workouts.sort((a, b) => a['distance'] - b['distance'])
+        switch (selectSort.value) {
+            case 'distance-asc':
+                Toastify({
+                    text: `Workouts sorted based on Distance Ascending`,
+                    duration: 2000,
+                    style: {
+                        background: `rgba(189, 126, 0, 1)`,
+                        color: 'white'
+                    },
+                }).showToast();
+                this.#workouts.sort((a, b) => a['distance'] - b['distance'])
+                break;
+            case 'distance-dsc':
+                Toastify({
+                    text: `Workouts sorted based on Distance descending`,
+                    duration: 2000,
+                    style: {
+                        background: `rgba(189, 126, 0, 1)`,
+                        color: 'white'
+                    },
+                }).showToast();
+                this.#workouts.sort((a, b) => b['distance'] - a['distance']);
+                break;
+            case 'duration-asc':
+                Toastify({
+                    text: `Workouts sorted based on Duration ascending`,
+                    duration: 2000,
+                    style: {
+                        background: `rgba(189, 126, 0, 1)`,
+                        color: 'white'
+                    },
+                }).showToast();
+                this.#workouts.sort((a, b) => a['duration'] - b['duration'])
+                break;
+            case 'duration-dsc':
+                Toastify({
+                    text: `Workouts sorted based on Duration descending`,
+                    duration: 2000,
+                    style: {
+                        background: `rgba(189, 126, 0, 1)`,
+                        color: 'white'
+                    },
+                }).showToast();
+                this.#workouts.sort((a, b) => b['duration'] - a['duration'])
+                break;
+            case 'pace-asc':
+                Toastify({
+                    text: `Workouts sorted based on Pace ascending`,
+                    duration: 1000,
+                    style: {
+                        background: `rgba(189, 126, 0, 1)`,
+                        color: 'white'
+                    },
+                }).showToast();
+                this.#workouts.sort((a, b) => b['duration'] - a['duration'])
+                break;
+            case 'pace-dsc':
+                Toastify({
+                    text: `Workouts sorted based on Pace descending`,
+                    duration: 1000,
+                    style: {
+                        background: `rgba(189, 126, 0, 1)`,
+                        color: 'white'
+                    },
+                }).showToast();
+                this.#workouts.sort((a, b) => b['duration'] - a['duration'])
+                break;
+
+
+
         }
-        if (selectSort.value === 'distance-dsc') {
-            console.log(`Workouts sorted based on Distance Descendants`)
-            this._workouts.sort((a, b) => b['distance'] - a['distance'])
-        }
-        if (selectSort.value === 'duration-asc') {
-            console.log(`Workouts sorted based on Distance Ascending`)
-            this._workouts.sort((a, b) => a['duration'] - b['duration'])
-        }
-        if (selectSort.value === 'duration-dsc') {
-            console.log(`Workouts sorted based on Distance Descendants`)
-            this._workouts.sort((a, b) => b['duration'] - a['duration'])
-        }
-        if (selectSort.value === 'pace-asc') {
-            console.log(`Workouts sorted based on Distance Descendants`)
-            this._workouts.sort((a, b) => b['duration'] - a['duration'])
-        }
-        if (selectSort.value === 'pace-dsc') {
-            console.log(`Workouts sorted based on Distance Descendants`)
-            this._workouts.sort((a, b) => b['duration'] - a['duration'])
-        }
-        this._workouts.forEach(workout => this._renderWorkout(workout))
+
+        this.#workouts.forEach(workout => this._renderWorkout(workout))
     }
 
     _showRouteOnMap(route) {
@@ -500,12 +556,12 @@ class App {
 
         this._removeMapElements() // will probably need to clear the new markers also
         this._setMarkerStart(route[0][0], route[0][1]) //change to new markers please for display only
-        this._markerEndCoords = [route.at(-1)[0], route.at(-1)[1]]
-        this._markerEnd = new mapboxgl.Marker({
+        this.#markerEndCoords = [route.at(-1)[0], route.at(-1)[1]]
+        this.#markerEnd = new mapboxgl.Marker({
             color: "#000",
             draggable: false
-        }).setLngLat(this._markerEndCoords)
-            .addTo(this._map)
+        }).setLngLat(this.#markerEndCoords)
+            .addTo(this.#map)
 
         const geojson = {
             type: 'Feature',
@@ -518,12 +574,12 @@ class App {
             }
         };
         // if the route already exists on the map, we'll reset it using setData
-        if (this._map.getSource('route')) {
-            this._map.getSource('route').setData(geojson);
+        if (this.#map.getSource('route')) {
+            this.#map.getSource('route').setData(geojson);
         }
         // otherwise, we'll make a new request
         else {
-            this._map.addLayer({
+            this.#map.addLayer({
                 id: 'route',
                 type: 'line',
                 source: {
@@ -555,7 +611,7 @@ class App {
         if (e.target.id === 'button-delete') {
             //element to delete
             if (this._isEditing) return
-            this._workouts = this._workouts.filter(workout => workout._id !== Number(parentWorkout.dataset.id))
+            this.#workouts = this.#workouts.filter(workout => workout._id !== Number(parentWorkout.dataset.id))
 
             //todo: Alert message
             console.log(`Workout #${parentWorkout.dataset.id} deleted.`)
@@ -578,15 +634,15 @@ class App {
             }
 
 
-            this._workouts.forEach(workout => this._renderWorkout(workout))
+            this.#workouts.forEach(workout => this._renderWorkout(workout))
 
             //if there are no workouts - remove UI elements
-            if (this._workouts.length === 0) {
+            if (this.#workouts.length === 0) {
                 this._removeMapElements()
                 //todo: Alert message
                 console.log('There are no more workouts! Start fresh.')
 
-                this._setMarkerStart(this._userLng, this._userLat)
+                this._setMarkerStart(this.#userLng, this.#userLat)
             }
 
         }
@@ -594,7 +650,7 @@ class App {
         if (e.target.id === 'button-edit') {
             // console.log('edit mode')
             this._isEditing = true;
-            this._workoutToEdit = this._workouts.find(workout => workout._id === +parentWorkout.dataset.id)
+            this._workoutToEdit = this.#workouts.find(workout => workout._id === +parentWorkout.dataset.id)
             console.log(this._workoutToEdit)
             this._showRouteOnMap(this._workoutToEdit.route)
 
@@ -620,12 +676,21 @@ class App {
         //View Function
         if (e.target.id === 'button-view') {
             if (this._isAdding) return;
-            this._displayedWorkout = this._workouts.find(workout => workout._id === +parentWorkout.dataset.id)
-            this._route = this._displayedWorkout.route
-            // console.log(this._route)
+            this._displayedWorkout = this.#workouts.find(workout => workout._id === +parentWorkout.dataset.id)
+            this.#route = this._displayedWorkout.route
+            // console.log(this.#route)
             console.log(this._displayedWorkout)
-            // console.log(Boolean(this._map.getLayer('route')))
-            this._showRouteOnMap(this._route)
+            // console.log(Boolean(this.#map.getLayer('route')))
+            this._showRouteOnMap(this.#route)
+            // this.#map.flyTo({
+            //     center: this._displayedWorkout.route[this._displayedWorkout.route / 2],
+            //     zoom: 14
+            // });
+            let bbox = [this._displayedWorkout.route[0], this._displayedWorkout.route.at(-1)]
+            this.#map.fitBounds(bbox, {
+                padding: { top: 10, bottom: 25, left: 150, right: 150 }
+            });
+
         }
 
 
@@ -645,8 +710,8 @@ class App {
             return
         }
 
-        console.log(this._workouts)
-        if (this._workouts.length === 0) {
+        console.log(this.#workouts)
+        if (this.#workouts.length === 0) {
             //todo: alert message
             console.log('No workouts to delete.')
             Toastify({
@@ -659,11 +724,11 @@ class App {
             }).showToast();
             return
         }
-        this._workouts = []
+        this.#workouts = []
         divWorkoutList.innerHTML = ''
-        this._workouts.forEach(workout => this._renderWorkout(workout))
+        this.#workouts.forEach(workout => this._renderWorkout(workout))
         this._removeMapElements()
-        this._setMarkerStart(this._userLng, this._userLat)
+        this._setMarkerStart(this.#userLng, this.#userLat)
         //todo: alert message
         console.log('All workouts deleted. Click on map to start and add again!')
         Toastify({
@@ -686,7 +751,7 @@ class App {
         this._workoutToEdit.duration = +inputDuration.value
         this._workoutToEdit.type = selectType.value
         divWorkoutList.innerHTML = ''
-        this._workouts.forEach(workout => this._renderWorkout(workout))
+        this.#workouts.forEach(workout => this._renderWorkout(workout))
         // divInput.style.opacity = 0;
         divInput.classList.add('is--hidden')
         this._removeMapElements()
@@ -709,7 +774,7 @@ class App {
     _cancelNewWorkout() {
         divInput.classList.add('is--hidden')
         this._removeMapElements()
-        this._setMarkerStart(this._userLng, this._userLat)
+        this._setMarkerStart(this.#userLng, this.#userLat)
         //todo: alert message
         console.log('Process Cancelled')
         Toastify({
@@ -721,6 +786,7 @@ class App {
             },
         }).showToast();
         this._isEditing = false
+        labelDurationError.style.opacity = 0
     }
 
     // _loadLocalStorage() {
@@ -734,12 +800,12 @@ class App {
 
     //     })
 
-    //     this._workouts = data
-    //     this._workouts.forEach(workout => {
+    //     this.#workouts = data
+    //     this.#workouts.forEach(workout => {
 
     //         this._renderWorkout(workout)
     //     })
-    //     console.log(this._workouts)
+    //     console.log(this.#workouts)
     // }
 
 }
