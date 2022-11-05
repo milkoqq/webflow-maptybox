@@ -158,6 +158,10 @@ class App {
                 style: 'mapbox://styles/mapbox/streets-v11',
                 center: [lng, lat], // starting position
                 zoom: this.#mapZoomLevel
+                // center: [80, 36], // starting position
+                // zoom: 1,
+                // projection: 'globe'
+
             });
 
         }
@@ -168,6 +172,7 @@ class App {
     }
 
     _setMarkerStart(lng, lat) {
+
         this.#markerStart = new mapboxgl.Marker()
             .setLngLat([lng, lat])
             // .setPopup(new mapboxgl.Popup({ offset: 25 }).setText('Current Position'))
@@ -448,6 +453,11 @@ class App {
         this._removeMapElements()
         this._setMarkerStart(this.#userLng, this.#userLat)
 
+        this.#map.flyTo({
+            center: [this.#userLng, this.#userLat],
+            essential: true, // this animation is considered essential with respect to prefers-reduced-motion
+            zoom: 14
+        });
         // divInput.classList.remove('is--hidden')
         labelDurationError.style.opacity = 0
         inputDuration.focus()
@@ -682,10 +692,7 @@ class App {
             console.log(this._displayedWorkout)
             // console.log(Boolean(this.#map.getLayer('route')))
             this._showRouteOnMap(this.#route)
-            // this.#map.flyTo({
-            //     center: this._displayedWorkout.route[this._displayedWorkout.route / 2],
-            //     zoom: 14
-            // });
+
             let bbox = [this._displayedWorkout.route[0], this._displayedWorkout.route.at(-1)]
             this.#map.fitBounds(bbox, {
                 padding: { top: 10, bottom: 25, left: 150, right: 150 }
