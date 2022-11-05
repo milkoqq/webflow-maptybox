@@ -206,7 +206,7 @@ class App {
             await this._fetchRoute(this.#markerStartCoords, this.#markerEndCoords)
             // console.log(this.#map.getLayer('route')) ////// UNDEFINED?
             // console.log(this.#route) /////// EXISTS
-            this.#markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h5 style="color: black">Run in ${this.#locationStreet}, ${this.#locationCity}. <br> Distance: ${this.#distance}km</h5>`)) // add popup
+            this.#markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h4>Workout in ${this.#locationStreet}, ${this.#locationCity}. <br> <span style="font-style: italic;">Distance: ${this.#distance}km</span></h4>`)) // add popup
             this.#markerEnd.togglePopup()
             divBegin.classList.add('is--hidden')
             divInput.classList.remove('is--hidden')
@@ -319,8 +319,9 @@ class App {
                 }
             });
         }
-        this.#markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h5 style="color: black">Run in ${this.#locationStreet}, ${this.#locationCity}. <br> Distance: ${this.#distance}km</h5>`)) // add popup
+        this.#markerEnd.setPopup(new mapboxgl.Popup({ closeOnClick: false }).setHTML(`<h4>Workout in ${this.#locationStreet}, ${this.#locationCity}. <br> <span style="font-style: italic;"> Distance: ${this.#distance}km</span></h4>`)) // add popup
         this.#markerEnd.togglePopup()
+
 
     }
 
@@ -458,7 +459,6 @@ class App {
             essential: true, // this animation is considered essential with respect to prefers-reduced-motion
             zoom: 14
         });
-        // divInput.classList.remove('is--hidden')
         labelDurationError.style.opacity = 0
         inputDuration.focus()
         btnConfirm.style.display = 'inline-block'
@@ -489,7 +489,7 @@ class App {
         switch (selectSort.value) {
             case 'distance-asc':
                 Toastify({
-                    text: `Workouts sorted based on Distance Ascending`,
+                    text: `Sorted by Distance-Asc`,
                     duration: 2000,
                     style: {
                         background: `rgba(189, 126, 0, 1)`,
@@ -500,7 +500,7 @@ class App {
                 break;
             case 'distance-dsc':
                 Toastify({
-                    text: `Workouts sorted based on Distance descending`,
+                    text: `Sorted by Distance-Dsc`,
                     duration: 2000,
                     style: {
                         background: `rgba(189, 126, 0, 1)`,
@@ -511,7 +511,7 @@ class App {
                 break;
             case 'duration-asc':
                 Toastify({
-                    text: `Workouts sorted based on Duration ascending`,
+                    text: `Sorted by Duration-Asc`,
                     duration: 2000,
                     style: {
                         background: `rgba(189, 126, 0, 1)`,
@@ -522,7 +522,7 @@ class App {
                 break;
             case 'duration-dsc':
                 Toastify({
-                    text: `Workouts sorted based on Duration descending`,
+                    text: `Sorted by Duration-Dsc`,
                     duration: 2000,
                     style: {
                         background: `rgba(189, 126, 0, 1)`,
@@ -533,25 +533,25 @@ class App {
                 break;
             case 'pace-asc':
                 Toastify({
-                    text: `Workouts sorted based on Pace ascending`,
-                    duration: 1000,
+                    text: `Sorted by Pace-Asc`,
+                    duration: 2000,
                     style: {
                         background: `rgba(189, 126, 0, 1)`,
                         color: 'white'
                     },
                 }).showToast();
-                this.#workouts.sort((a, b) => b['duration'] - a['duration'])
+                this.#workouts.sort((a, b) => b['pace'] - a['pace'])
                 break;
             case 'pace-dsc':
                 Toastify({
-                    text: `Workouts sorted based on Pace descending`,
-                    duration: 1000,
+                    text: `Sorted by Pace-Dsc`,
+                    duration: 2000,
                     style: {
                         background: `rgba(189, 126, 0, 1)`,
                         color: 'white'
                     },
                 }).showToast();
-                this.#workouts.sort((a, b) => b['duration'] - a['duration'])
+                this.#workouts.sort((a, b) => b['pace'] - a['pace'])
                 break;
 
 
@@ -620,7 +620,17 @@ class App {
         //Delete Function
         if (e.target.id === 'button-delete') {
             //element to delete
-            if (this._isEditing) return
+            if (this._isEditing) {
+                Toastify({
+                    text: `Unable to delete while editing.`,
+                    duration: 2000,
+                    style: {
+                        background: `rgba(255, 102, 25, 1)`,
+                        color: 'white'
+                    },
+                }).showToast();
+                return
+            }
             this.#workouts = this.#workouts.filter(workout => workout._id !== Number(parentWorkout.dataset.id))
 
             //todo: Alert message
@@ -651,6 +661,7 @@ class App {
                 this._removeMapElements()
                 //todo: Alert message
                 console.log('There are no more workouts! Start fresh.')
+                divBegin.classList.remove('is--hidden')
 
                 this._setMarkerStart(this.#userLng, this.#userLat)
             }
@@ -695,7 +706,7 @@ class App {
 
             let bbox = [this._displayedWorkout.route[0], this._displayedWorkout.route.at(-1)]
             this.#map.fitBounds(bbox, {
-                padding: { top: 10, bottom: 25, left: 150, right: 150 }
+                padding: { top: 40, bottom: 50, left: 200, right: 200 }
             });
 
         }
@@ -707,8 +718,8 @@ class App {
             //todo: alert message
             console.log('Currently editing workout. Unable to delete all workouts.')
             Toastify({
-                text: `Currently editing workout. Unable to delete all workouts.`,
-                duration: 2000,
+                text: `Currently editing workout. \n\ Unable to delete all workouts.`,
+                duration: 2500,
                 style: {
                     background: `rgba(189, 126, 0, 1)`,
                     color: 'white'
@@ -733,9 +744,11 @@ class App {
         }
         this.#workouts = []
         divWorkoutList.innerHTML = ''
+        selectSort.value = 'default'
         this.#workouts.forEach(workout => this._renderWorkout(workout))
         this._removeMapElements()
         this._setMarkerStart(this.#userLng, this.#userLat)
+        divBegin.classList.remove('is--hidden')
         //todo: alert message
         console.log('All workouts deleted. Click on map to start and add again!')
         Toastify({
@@ -785,7 +798,7 @@ class App {
         //todo: alert message
         console.log('Process Cancelled')
         Toastify({
-            text: `Process Cancelled`,
+            text: `Process cancelled.`,
             duration: 1000,
             style: {
                 background: `rgba(189, 126, 0, 1)`,
