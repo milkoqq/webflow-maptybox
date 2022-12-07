@@ -381,7 +381,7 @@ class App {
 
     _renderWorkout(workout) {
         workout._date = new Date(workout._date)
-        this.#html = `
+        this.#html = html`
         <div class="app_left-form-workout">
         <div class="app_left-form-workout-side is--${workout.type}"></div>
         <div class="app_left-form-workout-main" data-id="${workout._id}">

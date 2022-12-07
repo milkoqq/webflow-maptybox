@@ -4,12 +4,12 @@
 
 # Add Toast boxes for sorting. If no workouts, shouldn't work [Javascript] x
 
-# Styling of Mapbox Popups [JS/CSS/Mapbox API]
+# Styling of Mapbox Popups [JS/CSS/Mapbox API] [x]
 
-# APP BOTTOM PADDING?
+# APP BOTTOM PADDING? [x]
 
-# ADD TOAST: CANT DELETE WHILE EDITING WORKOUT
+# ADD TOAST: CANT DELETE WHILE EDITING WORKOUT x
 
-# FAVICO
+# FAVICO x
 
-# UNIFIED TOAST COLORS
+# UNIFIED TOAST COLORS x
